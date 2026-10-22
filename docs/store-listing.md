@@ -87,5 +87,15 @@ Build steps for reviewers: see README → Develop (`npm ci && npm run build:fire
 
 ## Screenshots
 
-- Chrome: at least one, 1280×800 or 640×400; small promo tile 440×280.
-- Firefox: optional but recommended.
+Generated locally into `store-assets/` (git-ignored: the bundle shots show
+third-party game art). All are 24-bit PNG, no alpha.
+
+| File | Size | Caption |
+|---|---|---|
+| `1-humble-steam-gog.png` | 1280×800 | Every game gets a Steam link, and games you already own are marked with the stores you own them on. |
+| `2-fanatical-epic-search.png` | 1280×800 | Works on Fanatical too. No Steam ID listed? You get a Steam search link instead. |
+| `3-humble-steam-epic.png` | 1280×800 | Steam, GOG and Epic Games Store libraries, matched by store ID. |
+| `4-popup.png` | 1280×800 | The popup shows each library's status and refreshes after a purchase. |
+| `promo-tile-440x280.png` | 440×280 | Chrome small promo tile. |
+
+Firefox Add-ons accepts the same 1280×800 shots.
