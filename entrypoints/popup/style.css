@@ -1,0 +1,163 @@
+:root {
+  --bg: #ffffff;
+  --fg: #1b2838;
+  --muted: #5b6b7c;
+  --line: #dde3ea;
+  --accent: #1a6fb0;
+  --accent-fg: #ffffff;
+  --ok: #4c8a22;
+  --warn: #b06a00;
+  --error: #b3261e;
+  --panel: #f3f6f9;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1b2838;
+    --fg: #e4ebf1;
+    --muted: #9aaab9;
+    --line: #2f4256;
+    --accent: #66c0f4;
+    --accent-fg: #0e1621;
+    --ok: #a4d007;
+    --warn: #f0b44c;
+    --error: #ff8a80;
+    --panel: #22344a;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  width: 320px;
+  background: var(--bg);
+  color: var(--fg);
+  font: 14px/1.45 system-ui, sans-serif;
+}
+
+main {
+  padding: 14px 16px 12px;
+}
+
+h1 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+h2 {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+a {
+  color: var(--accent);
+}
+
+button {
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.access {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--panel);
+  border-left: 3px solid var(--warn);
+}
+
+.access p {
+  margin: 0 0 8px;
+}
+
+.stores {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.store {
+  display: grid;
+  grid-template-columns: 68px 1fr;
+  column-gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.store:last-child {
+  border-bottom: 0;
+}
+
+.store__name {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.store__name::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 50%;
+  vertical-align: 1px;
+  background: var(--muted);
+}
+
+.store--ok .store__name::before {
+  background: var(--ok);
+}
+
+.store--syncing .store__name::before {
+  background: var(--warn);
+}
+
+.store--error .store__name::before {
+  background: var(--error);
+}
+
+.store--error .store__detail {
+  color: var(--error);
+}
+
+.store__detail {
+  color: var(--muted);
+}
+
+.store a {
+  grid-column: 2;
+}
+
+.hint {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+footer {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11px;
+}

@@ -1,0 +1,176 @@
+{
+ "name": "Build your own Fall Bundle (2026)",
+ "type": "bundle",
+ "products": [
+  {
+   "_id": "656468bd61f63409be2e9784",
+   "name": "Dreamscaper",
+   "type": "game",
+   "mystery": null,
+   "steam": {
+    "type": "app",
+    "id": 1040420
+   }
+  },
+  {
+   "_id": "6723aa113950d322823c447a",
+   "name": "Police Stories - Complete Edition",
+   "type": "bundle",
+   "mystery": false,
+   "steam": {
+    "type": null,
+    "id": null
+   }
+  },
+  {
+   "_id": "68da9ee0b53e88e12ba9d594",
+   "name": "Defense Grid: Containment Bundle",
+   "type": "game",
+   "mystery": false,
+   "steam": {
+    "type": "app",
+    "id": 18500
+   }
+  },
+  {
+   "_id": "6a6760e3d42140a4335b757b",
+   "name": "Saint Kotar",
+   "type": "game",
+   "mystery": null,
+   "steam": {
+    "type": "app",
+    "id": 1358530
+   }
+  },
+  {
+   "_id": "680a4d79df79041f6c3de383",
+   "name": "DG2: Defense Grid 2",
+   "type": "game",
+   "mystery": false,
+   "steam": {
+    "type": "app",
+    "id": 221540
+   }
+  },
+  {
+   "_id": "6a8eced60693dce2af477a06",
+   "name": "Cowboy 3030",
+   "type": "game",
+   "mystery": false,
+   "steam": {
+    "type": "app",
+    "id": 2347550
+   }
+  },
+  {
+   "_id": "6a6761033305c09e67bbdbe1",
+   "name": "HammerHelm",
+   "type": "game",
+   "mystery": null,
+   "steam": {
+    "type": "app",
+    "id": 664000
+   }
+  },
+  {
+   "_id": "691c938321d2a395c6eb9007",
+   "name": "Castle Of Alchemists",
+   "type": "game",
+   "mystery": false,
+   "steam": {
+    "type": "app",
+    "id": 1724770
+   }
+  },
+  {
+   "_id": "6a4fb3d226a0967fd291152a",
+   "name": "Empires in Ruins",
+   "type": "game",
+   "mystery": null,
+   "steam": {
+    "type": "app",
+    "id": 604510
+   }
+  },
+  {
+   "_id": "64a5414faf14b205b07f42e9",
+   "name": "Teslagrad Remastered",
+   "type": "game",
+   "mystery": null,
+   "steam": {
+    "type": "app",
+    "id": 2168150
+   }
+  },
+  {
+   "_id": "64a53f1f77d8d75aecb6aabd",
+   "name": "Teslagrad 2",
+   "type": "game",
+   "mystery": null,
+   "steam": {
+    "type": "app",
+    "id": 1698220
+   }
+  },
+  {
+   "_id": "6a219e6666c5f7503f055ccf",
+   "name": "Cozy Space Survivors",
+   "type": "game",
+   "mystery": false,
+   "steam": {
+    "type": "app",
+    "id": 2657850
+   }
+  },
+  {
+   "_id": "67ab398a7e49ce1da28552c3",
+   "name": "StormEdge",
+   "type": "game",
+   "mystery": false,
+   "steam": {
+    "type": "app",
+    "id": 2321350
+   }
+  },
+  {
+   "_id": "656468e034ab4474cf61d69b",
+   "name": "One More Island",
+   "type": "game",
+   "mystery": null,
+   "steam": {
+    "type": "app",
+    "id": 1454160
+   }
+  },
+  {
+   "_id": "6a0af5f2a3b506e8c5a8f003",
+   "name": "Retrowave 2",
+   "type": "game",
+   "mystery": false,
+   "steam": {
+    "type": "app",
+    "id": 3331000
+   }
+  },
+  {
+   "_id": "6a185a6792426b0404768691",
+   "name": "Archaeogem",
+   "type": "game",
+   "mystery": false,
+   "steam": {
+    "type": "app",
+    "id": 2092730
+   }
+  },
+  {
+   "_id": "6a85d72395ac5124ec1d9eda",
+   "name": "Initial Drift Online",
+   "type": "game",
+   "mystery": false,
+   "steam": {
+    "type": "app",
+    "id": 1456200
+   }
+  }
+ ]
+}

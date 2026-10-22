@@ -1,0 +1,110 @@
+{
+ "name": "CoppaFeel! Charity Bundle",
+ "type": "bundle",
+ "bundles": [
+  {
+   "games": [
+    {
+     "_id": "6abe44091ad0105d07af1251",
+     "name": "Haste",
+     "type": "game",
+     "mystery": null,
+     "steam": {
+      "type": "app",
+      "id": 1796470
+     }
+    },
+    {
+     "_id": "6abe444398a57e552a081614",
+     "name": "PlateUp!",
+     "type": "game",
+     "mystery": null,
+     "steam": {
+      "type": "app",
+      "id": 1599600
+     }
+    },
+    {
+     "_id": "6abe4495f50673bfbc56ad90",
+     "name": "Overcooked",
+     "type": "game",
+     "mystery": null,
+     "steam": {
+      "type": "app",
+      "id": 448510
+     }
+    },
+    {
+     "_id": "6abe44bf98a57e552a081658",
+     "name": "KeyWe",
+     "type": "game",
+     "mystery": null,
+     "steam": {
+      "type": "app",
+      "id": 1242980
+     }
+    },
+    {
+     "_id": "6abe44e5395ea0b59c447e19",
+     "name": "Pine Hearts",
+     "type": "game",
+     "mystery": null,
+     "steam": {
+      "type": "app",
+      "id": 1781010
+     }
+    },
+    {
+     "_id": "6abe450898a57e552a081689",
+     "name": "Critter Café",
+     "type": "game",
+     "mystery": null,
+     "steam": {
+      "type": "app",
+      "id": null
+     }
+    },
+    {
+     "_id": "6abe4531395ea0b59c447e51",
+     "name": "Tiny Garden",
+     "type": "game",
+     "mystery": false,
+     "steam": {
+      "type": "app",
+      "id": 2812450
+     }
+    },
+    {
+     "_id": "6abe455316588f3adc11f1c2",
+     "name": "Dino Run DX",
+     "type": "game",
+     "mystery": null,
+     "steam": {
+      "type": "app",
+      "id": 248330
+     }
+    },
+    {
+     "_id": "6abe457716588f3adc11f1de",
+     "name": "Brunch Club",
+     "type": "game",
+     "mystery": null,
+     "steam": {
+      "type": "app",
+      "id": 1045120
+     }
+    },
+    {
+     "_id": "6abe45a1395ea0b59c447e8c",
+     "name": "Completely Stretchy",
+     "type": "game",
+     "mystery": false,
+     "steam": {
+      "type": "app",
+      "id": 1587570
+     }
+    }
+   ]
+  }
+ ]
+}

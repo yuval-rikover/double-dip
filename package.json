@@ -1,0 +1,24 @@
+{
+  "name": "bundle-steam-links",
+  "description": "Adds Steam store links to games on Humble Bundle and Fanatical bundle pages.",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build -b firefox",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip -b firefox",
+    "compile": "tsc --noEmit",
+    "test": "vitest run",
+    "postinstall": "wxt prepare"
+  },
+  "devDependencies": {
+    "happy-dom": "20.14.6",
+    "typescript": "6.0.3",
+    "vitest": "5.0.3",
+    "wxt": "0.21.4"
+  }
+}

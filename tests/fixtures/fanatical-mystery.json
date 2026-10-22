@@ -1,0 +1,30 @@
+{
+ "name": "Haunted Mystery Bundle",
+ "type": "bundle",
+ "bundles": [
+  {
+   "games": [
+    {
+     "_id": "6ad0d76445abc6f1244105a0",
+     "name": "Haunted Mystery Game",
+     "type": "game",
+     "mystery": true,
+     "steam": {
+      "type": "app",
+      "id": null
+     }
+    },
+    {
+     "_id": "6ad0d76445abc6f1244105a0",
+     "name": "Haunted Mystery Game",
+     "type": "game",
+     "mystery": true,
+     "steam": {
+      "type": "app",
+      "id": null
+     }
+    }
+   ]
+  }
+ ]
+}
