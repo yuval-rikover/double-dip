@@ -1,7 +1,8 @@
 {
-  "name": "bundle-steam-links",
-  "description": "Adds Steam store links to games on Humble Bundle and Fanatical bundle pages.",
+  "name": "double-dip",
+  "description": "Steam links and \"already owned\" markers (Steam, GOG, Epic) for games on Humble Bundle and Fanatical bundle pages.",
   "private": true,
+  "license": "MIT",
   "version": "0.1.0",
   "type": "module",
   "scripts": {
@@ -16,6 +17,7 @@
     "postinstall": "wxt prepare"
   },
   "devDependencies": {
+    "@wxt-dev/auto-icons": "1.1.2",
     "happy-dom": "20.14.6",
     "typescript": "6.0.3",
     "vitest": "5.0.3",

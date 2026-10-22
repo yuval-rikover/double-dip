@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a475e"/>
+      <stop offset="1" stop-color="#171a21"/>
+    </linearGradient>
+  </defs>
+  <!-- tile -->
+  <rect x="4" y="4" width="120" height="120" rx="26" fill="url(#bg)"/>
+  <!-- a bundle: three game cases, fanned -->
+  <rect x="22" y="30" width="46" height="62" rx="7" fill="#3d6a8c" transform="rotate(-14 45 61)"/>
+  <rect x="38" y="26" width="46" height="62" rx="7" fill="#4f8fbf" transform="rotate(-2 61 57)"/>
+  <rect x="54" y="24" width="46" height="62" rx="7" fill="#66c0f4" transform="rotate(10 77 55)"/>
+  <!-- owned -->
+  <circle cx="88" cy="90" r="25" fill="#5c9e1f" stroke="#171a21" stroke-width="6"/>
+  <path d="M76 90.5l8 8 16-17" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

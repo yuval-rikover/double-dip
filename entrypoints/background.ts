@@ -73,7 +73,7 @@ export default defineBackground(() => {
     handle(message)
       .then(sendResponse)
       .catch((error) => {
-        console.warn('[Bundle Steam Links]', error);
+        console.warn('[Double Dip]', error);
         sendResponse(undefined);
       });
     return true; // keeps sendResponse valid until the work finishes

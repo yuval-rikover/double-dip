@@ -1,12 +1,15 @@
 import { defineConfig } from 'wxt';
 
 export default defineConfig({
+  modules: ['@wxt-dev/auto-icons'],
+  // Generates the 16–128 px icons from one SVG at build time.
+  autoIcons: { baseIconPath: 'assets/icon.svg' },
   // WXT defaults Firefox to MV2; build MV3 for both browsers.
   manifestVersion: 3,
   manifest: ({ browser }) => ({
-    name: 'Bundle Steam Links',
+    name: 'Double Dip',
     description:
-      'Adds Steam store links to games on Humble Bundle and Fanatical bundle pages.',
+      'Steam links and "already owned" markers (Steam, GOG, Epic) for games on Humble Bundle and Fanatical bundle pages.',
     permissions: ['storage'],
     // Called from the background script: Steam search and library, GOG
     // library, Epic order history, and ITAD id lookups.
@@ -19,9 +22,13 @@ export default defineConfig({
     ...(browser === 'firefox' && {
       browser_specific_settings: {
         gecko: {
-          id: 'bundle-steam-links@extension',
-          // Nothing leaves the browser except calls to the stores themselves.
-          data_collection_permissions: { required: ['none'] },
+          id: 'double-dip@yuval-rikover',
+          // Firefox's built-in data-consent prompt needs 140+.
+          strict_min_version: '140.0',
+          // Game titles and Steam ids from bundle pages go to Steam search and
+          // IsThereAnyDeal to identify the games: page content sent off-device.
+          // Nothing is sent to the developer.
+          data_collection_permissions: { required: ['websiteContent'] },
         },
       },
     }),

@@ -55,7 +55,7 @@ export default defineContentScript({
           });
           observer.observe(document.body, { childList: true, subtree: true });
         })
-        .catch((error) => console.warn('[Bundle Steam Links]', error));
+        .catch((error) => console.warn('[Double Dip]', error));
     };
 
     run();

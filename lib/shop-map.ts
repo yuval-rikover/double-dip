@@ -69,7 +69,7 @@ export async function steamRefsToShopIds(steamRefs: string[], deps: ShopMapDeps)
     }
     await deps.cache.set(toCache);
   } catch (error) {
-    console.warn('[Bundle Steam Links] store id lookup failed', error);
+    console.warn('[Double Dip] store id lookup failed', error);
   }
   return result;
 }

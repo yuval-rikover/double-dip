@@ -26,24 +26,51 @@
   margin: 4px 0;
 }
 
+/* "Owned" marker: a green check, then one chip per store in its own colors. */
 .bsl-owned {
   position: absolute !important;
   top: 8px !important;
   left: 8px !important;
   z-index: 10 !important;
-  padding: 3px 8px;
-  border-radius: 4px;
-  background: #4c6b22;
-  color: #d2efa9 !important;
+  display: flex;
+  gap: 3px;
   font: 600 12px/1.4 system-ui, sans-serif;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 50%);
-  pointer-events: none;
+  cursor: default;
 }
 
 .bsl-owned.bsl-owned--inline {
   position: static !important;
-  display: inline-block;
+  display: inline-flex;
   margin: 4px 0 4px 6px;
+  vertical-align: top;
+}
+
+.bsl-owned__check,
+.bsl-chip {
+  padding: 3px 7px;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 50%);
+}
+
+.bsl-owned__check {
+  background: #5c9e1f;
+  color: #fff !important;
+}
+
+.bsl-chip--steam {
+  background: #1a9fff;
+  color: #fff !important;
+}
+
+.bsl-chip--gog {
+  background: #86328a;
+  color: #fff !important;
+}
+
+.bsl-chip--epic {
+  background: #2a2a2a;
+  color: #fff !important;
+  border: 1px solid #fff3;
 }
 
 .bsl-badge--search {

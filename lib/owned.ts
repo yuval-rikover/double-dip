@@ -29,14 +29,31 @@ export function markOwnedBadges(doc: Document, lookup: OwnershipLookup): number 
     if (!stores) continue;
     badge.setAttribute(CHECKED_ATTR, '');
     if (stores.length === 0) continue;
-    const names = stores.map((store) => STORE_NAMES[store]);
-    const marker = doc.createElement('span');
-    marker.setAttribute(OWNED_ATTR, stores.join(' '));
-    marker.className = badge.classList.contains('bsl-badge--inline') ? 'bsl-owned bsl-owned--inline' : 'bsl-owned';
-    marker.textContent = `✓ Owned · ${names.join(', ')}`;
-    marker.title = `In your ${names.join(' and ')} ${names.length > 1 ? 'libraries' : 'library'}`;
-    badge.after(marker);
+    badge.after(createOwnedMarker(doc, stores, badge.classList.contains('bsl-badge--inline')));
     added++;
   }
   return added;
+}
+
+/** A green check followed by one chip per store, in that store's colors. */
+function createOwnedMarker(doc: Document, stores: Store[], inline: boolean): HTMLElement {
+  const names = stores.map((store) => STORE_NAMES[store]);
+  const label = `Owned on ${names.join(' and ')}`;
+  const marker = doc.createElement('span');
+  marker.setAttribute(OWNED_ATTR, stores.join(' '));
+  marker.className = inline ? 'bsl-owned bsl-owned--inline' : 'bsl-owned';
+  marker.title = label;
+  marker.setAttribute('role', 'img');
+  marker.setAttribute('aria-label', label);
+  const check = doc.createElement('span');
+  check.className = 'bsl-owned__check';
+  check.textContent = '✓';
+  marker.append(check);
+  for (const store of stores) {
+    const chip = doc.createElement('span');
+    chip.className = `bsl-chip bsl-chip--${store}`;
+    chip.textContent = STORE_NAMES[store];
+    marker.append(chip);
+  }
+  return marker;
 }

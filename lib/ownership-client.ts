@@ -25,6 +25,6 @@ export function createOwnershipMarker(): () => void {
         for (const ref of refs) answers.set(ref, response?.owned[ref] ?? []);
         mark();
       })
-      .catch((error) => console.warn('[Bundle Steam Links]', error));
+      .catch((error) => console.warn('[Double Dip]', error));
   };
 }

@@ -28,9 +28,16 @@ describe('markOwnedBadges', () => {
     const one = tile({ name: 'Brutal Legend', steam: { type: 'app', id: 225260 } });
     const two = tile({ name: 'Psychonauts', steam: { type: 'app', id: 3830 } });
     expect(markOwnedBadges(document, lookup)).toBe(2);
-    expect(one.querySelector('[data-bsl-owned]')?.textContent).toBe('✓ Owned · Steam');
-    expect(two.querySelector('[data-bsl-owned]')?.textContent).toBe('✓ Owned · Steam, GOG');
-    expect(two.querySelector<HTMLElement>('[data-bsl-owned]')?.title).toBe('In your Steam and GOG libraries');
+    const chips = (el: Element) => [...el.querySelectorAll('.bsl-chip')].map((chip) => [chip.className, chip.textContent]);
+    expect(chips(one)).toEqual([['bsl-chip bsl-chip--steam', 'Steam']]);
+    expect(chips(two)).toEqual([
+      ['bsl-chip bsl-chip--steam', 'Steam'],
+      ['bsl-chip bsl-chip--gog', 'GOG'],
+    ]);
+    const marker = two.querySelector<HTMLElement>('[data-bsl-owned]')!;
+    expect(marker.querySelector('.bsl-owned__check')?.textContent).toBe('✓');
+    expect(marker.title).toBe('Owned on Steam and GOG');
+    expect(marker.getAttribute('aria-label')).toBe('Owned on Steam and GOG');
   });
 
   it('marks nothing for games owned nowhere, or search-only badges', () => {

@@ -31,7 +31,7 @@ export default defineContentScript({
 
     const rescan = () => {
       annotate();
-      scan().catch((error) => console.warn('[Bundle Steam Links]', error));
+      scan().catch((error) => console.warn('[Double Dip]', error));
     };
 
     rescan();

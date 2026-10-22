@@ -1,4 +1,4 @@
-# Bundle Steam Links
+# Double Dip
 
 Chrome and Firefox extension that adds a Steam store link to each game on
 Fanatical and Humble Bundle bundle pages, and marks the games already in your
