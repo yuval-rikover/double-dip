@@ -6,6 +6,9 @@ export default defineConfig({
   autoIcons: { baseIconPath: 'assets/icon.svg' },
   // WXT defaults Firefox to MV2; build MV3 for both browsers.
   manifestVersion: 3,
+  // The sources zip goes to Firefox reviewers: code only, not the local store
+  // screenshots (third-party game art, git-ignored).
+  zip: { excludeSources: ['store-assets/**'] },
   manifest: ({ browser }) => ({
     name: 'Double Dip',
     description:
