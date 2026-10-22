@@ -1,4 +1,5 @@
 import type { KeyValueCache } from './cache';
+import { createLimiter, type Limiter } from './concurrency';
 import { ITAD_SHOP, itadIdsByTitle, shopIdsByItadId } from './itad';
 import { normalizeTitle } from './normalize';
 import { parseSteamRef, type SteamRef } from './steam';
@@ -15,13 +16,18 @@ export interface ResolveDeps {
   fetch: typeof fetch;
   cache: TitleCache;
   now?: () => number;
+  /**
+   * Caps parallel Steam searches. Pass one shared limiter when titles arrive
+   * in separate calls; Steam queues anything past about 4 at once.
+   */
+  limit?: Limiter;
 }
 
 const DAY = 24 * 60 * 60 * 1000;
 const HIT_TTL = 30 * DAY;
 // Misses expire sooner: Steam or ITAD may add the game later.
 const MISS_TTL = 1 * DAY;
-const SEARCH_CONCURRENCY = 4;
+export const SEARCH_CONCURRENCY = 4;
 
 export const cacheKey = (title: string) => `steam-title:${normalizeTitle(title)}`;
 
@@ -47,11 +53,14 @@ export async function resolveSteamTitles(titles: string[], deps: ResolveDeps): P
 
   const found = new Map<string, SteamRef>();
   const confirmedMiss = new Set<string>();
-  await mapLimit(pending, SEARCH_CONCURRENCY, async (title) => {
-    const ref = await searchSteam(title, deps.fetch).catch(() => undefined);
-    if (ref) found.set(title, ref);
-    else if (ref === null) confirmedMiss.add(title);
-  });
+  const limit = deps.limit ?? createLimiter(SEARCH_CONCURRENCY);
+  await Promise.all(
+    pending.map(async (title) => {
+      const ref = await limit(() => searchSteam(title, deps.fetch)).catch(() => undefined);
+      if (ref) found.set(title, ref);
+      else if (ref === null) confirmedMiss.add(title);
+    }),
+  );
 
   const leftover = pending.filter((title) => !found.has(title));
   if (leftover.length > 0) {
@@ -117,12 +126,4 @@ async function lookupViaItad(titles: string[], fetchFn: typeof fetch): Promise<M
 export function parseItadSteamIds(ids: string[] | null | undefined): SteamRef | null {
   const refs = (ids ?? []).map(parseSteamRef).filter((ref): ref is SteamRef => ref !== null);
   return refs.find((ref) => ref.type === 'app') ?? refs[0] ?? null;
-}
-
-async function mapLimit<T>(items: T[], limit: number, fn: (item: T) => Promise<void>): Promise<void> {
-  let next = 0;
-  const worker = async () => {
-    while (next < items.length) await fn(items[next++]!);
-  };
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
 }

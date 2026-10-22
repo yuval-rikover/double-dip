@@ -26,7 +26,20 @@ export interface GetLibraryStatusMessage {
 
 export type GetLibraryStatusResponse = LibrarySummaries;
 
-export type ExtensionMessage = ResolveSteamTitlesMessage | GetOwnershipMessage | GetLibraryStatusMessage;
+/**
+ * Content script → background, as a bundle page opens: start loading the
+ * libraries now, so they're ready by the time the first ownership question
+ * arrives. Fire and forget.
+ */
+export interface WarmLibrariesMessage {
+  type: 'warmLibraries';
+}
+
+export type ExtensionMessage =
+  | ResolveSteamTitlesMessage
+  | GetOwnershipMessage
+  | GetLibraryStatusMessage
+  | WarmLibrariesMessage;
 
 export function isExtensionMessage(message: unknown): message is ExtensionMessage {
   if (typeof message !== 'object' || message === null) return false;
@@ -34,6 +47,7 @@ export function isExtensionMessage(message: unknown): message is ExtensionMessag
   return (
     (type === 'resolveSteamTitles' && Array.isArray(titles)) ||
     (type === 'getOwnership' && Array.isArray(steamRefs)) ||
-    type === 'getLibraryStatus'
+    type === 'getLibraryStatus' ||
+    type === 'warmLibraries'
   );
 }

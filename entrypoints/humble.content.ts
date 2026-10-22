@@ -1,7 +1,7 @@
 import '../lib/badge.css';
 import { annotateHumble, collectHumbleTitles } from '../lib/humble-tiles';
 import type { ResolveSteamTitlesMessage, ResolveSteamTitlesResponse } from '../lib/messages';
-import { createOwnershipMarker } from '../lib/ownership-client';
+import { createOwnershipMarker, warmLibraries } from '../lib/ownership-client';
 import type { SteamRef } from '../lib/steam';
 
 export default defineContentScript({
@@ -17,23 +17,28 @@ export default defineContentScript({
       markOwned();
     };
 
-    const scan = async () => {
-      const titles = collectHumbleTitles(document).filter((title) => !requested.has(title));
-      if (titles.length === 0) return;
-      titles.forEach((title) => requested.add(title));
-      const message: ResolveSteamTitlesMessage = { type: 'resolveSteamTitles', titles };
+    // One request per title, so each badge appears as soon as its own lookup
+    // finishes instead of when the slowest one does. The background caps how
+    // many Steam searches run at once.
+    const resolveTitle = async (title: string) => {
+      const message: ResolveSteamTitlesMessage = { type: 'resolveSteamTitles', titles: [title] };
       const response = (await browser.runtime.sendMessage(message)) as ResolveSteamTitlesResponse | undefined;
       if (ctx.isInvalid) return;
       // A title the background couldn't answer for still gets a search link.
-      for (const title of titles) resolved.set(title, response?.[title] ?? null);
+      resolved.set(title, response?.[title] ?? null);
       annotate();
     };
 
     const rescan = () => {
       annotate();
-      scan().catch((error) => console.warn('[Double Dip]', error));
+      for (const title of collectHumbleTitles(document)) {
+        if (requested.has(title)) continue;
+        requested.add(title);
+        resolveTitle(title).catch((error) => console.warn('[Double Dip]', error));
+      }
     };
 
+    warmLibraries();
     rescan();
     let scheduled = false;
     const observer = new MutationObserver(() => {

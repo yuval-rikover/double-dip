@@ -1,7 +1,7 @@
 import '../lib/badge.css';
 import { extractBundleGames, fanaticalApiPath, parseFanaticalPath, type BundleGame } from '../lib/fanatical';
 import { annotateFanaticalCards } from '../lib/fanatical-cards';
-import { createOwnershipMarker } from '../lib/ownership-client';
+import { createOwnershipMarker, warmLibraries } from '../lib/ownership-client';
 
 export default defineContentScript({
   matches: ['*://www.fanatical.com/*'],
@@ -35,6 +35,7 @@ export default defineContentScript({
       observer = null;
       const page = parseFanaticalPath(pathname);
       if (!page) return;
+      warmLibraries();
 
       loadGames(fanaticalApiPath(page))
         .then((games) => {

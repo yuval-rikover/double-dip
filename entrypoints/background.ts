@@ -1,4 +1,5 @@
 import type { KeyValueCache } from '../lib/cache';
+import { createLimiter, shareInFlight } from '../lib/concurrency';
 import { createEpicSource, type OwnedEpic } from '../lib/epic-library';
 import { getGogLibrary, type OwnedGog } from '../lib/gog-library';
 import type { LibraryStore } from '../lib/library-cache';
@@ -7,7 +8,7 @@ import { isExtensionMessage, type ExtensionMessage } from '../lib/messages';
 import { getOwnership } from '../lib/ownership';
 import { steamRefsToShopIds, type CachedShopIds } from '../lib/shop-map';
 import { getSteamLibrary, type OwnedSteam } from '../lib/steam-library';
-import { resolveSteamTitles, type CachedRef } from '../lib/steam-resolve';
+import { resolveSteamTitles, SEARCH_CONCURRENCY, type CachedRef } from '../lib/steam-resolve';
 
 function keyValueCache<V>(): KeyValueCache<V> {
   return {
@@ -30,10 +31,18 @@ const shopIdCache = keyValueCache<CachedShopIds>();
 const steamStore = libraryStore<OwnedSteam>('steam-library');
 const gogStore = libraryStore<OwnedGog>('gog-library');
 
-const steamLibrary = (force = false) => getSteamLibrary({ fetch: fetchFn, store: steamStore }, { force });
-const gogLibrary = (force = false) => getGogLibrary({ fetch: fetchFn, store: gogStore }, { force });
+// Several pages (or a warm-up and the first ownership question) can ask at
+// once; they share one load instead of each fetching the library.
+const steamLibraryShared = shareInFlight(() => getSteamLibrary({ fetch: fetchFn, store: steamStore }));
+const gogLibraryShared = shareInFlight(() => getGogLibrary({ fetch: fetchFn, store: gogStore }));
+const steamLibrary = (force = false) =>
+  force ? getSteamLibrary({ fetch: fetchFn, store: steamStore }, { force }) : steamLibraryShared();
+const gogLibrary = (force = false) =>
+  force ? getGogLibrary({ fetch: fetchFn, store: gogStore }, { force }) : gogLibraryShared();
 // Epic's history takes many requests to read, so pages never wait for it.
 const epic = createEpicSource({ fetch: fetchFn, store: libraryStore<OwnedEpic>('epic-library') });
+// Shared by every title lookup: Humble pages send one request per title.
+const steamSearchLimit = createLimiter(SEARCH_CONCURRENCY);
 
 async function libraryStatus(refresh: boolean): Promise<LibrarySummaries> {
   const [steam, gog, epicLibrary] = await Promise.all([
@@ -51,7 +60,7 @@ async function libraryStatus(refresh: boolean): Promise<LibrarySummaries> {
 function handle(message: ExtensionMessage): Promise<unknown> {
   switch (message.type) {
     case 'resolveSteamTitles':
-      return resolveSteamTitles(message.titles, { fetch: fetchFn, cache: titleCache });
+      return resolveSteamTitles(message.titles, { fetch: fetchFn, cache: titleCache, limit: steamSearchLimit });
     case 'getOwnership':
       return getOwnership(message.steamRefs, {
         steam: () => steamLibrary(),
@@ -61,6 +70,8 @@ function handle(message: ExtensionMessage): Promise<unknown> {
       });
     case 'getLibraryStatus':
       return libraryStatus(message.refresh);
+    case 'warmLibraries':
+      return Promise.all([steamLibrary(), gogLibrary(), epic.now()]).then(() => undefined);
   }
 }
 
