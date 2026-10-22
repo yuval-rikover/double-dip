@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it } from 'vitest';
-import { annotateHumble, collectHumbleTitles, type SteamLookup } from '../lib/humble-tiles';
+import { annotateHumble, collectHumbleTitles } from '../lib/humble-tiles';
+import type { SteamLookup } from '../lib/title-site';
 
 /** Markup shaped like a Humble bundle page: tier grid tiles plus the details carousel. */
 const PAGE = `

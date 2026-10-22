@@ -57,12 +57,28 @@ describe('annotateFanaticalCards', () => {
     expect(badges()).toHaveLength(1);
   });
 
-  it('keeps a badge click from reaching the card', () => {
+  it('keeps a badge click from reaching the card, in either phase', () => {
+    document.body.innerHTML = card('bundle-game-card', 'h3', 'Haste');
+    let cardClicks = 0;
+    const article = document.querySelector('article')!;
+    article.addEventListener('click', () => cardClicks++);
+    // Green Man Gaming listens in the capture phase.
+    article.addEventListener('click', () => cardClicks++, true);
+    document.addEventListener('click', () => cardClicks++, true);
+    annotateFanaticalCards(document, games);
+    const click = new MouseEvent('click', { bubbles: true, cancelable: true });
+    onlyBadge().dispatchEvent(click);
+    expect(cardClicks).toBe(0);
+    // Only propagation stops: the link still opens Steam.
+    expect(click.defaultPrevented).toBe(false);
+  });
+
+  it('still lets clicks elsewhere on the card through', () => {
     document.body.innerHTML = card('bundle-game-card', 'h3', 'Haste');
     let cardClicks = 0;
     document.querySelector('article')!.addEventListener('click', () => cardClicks++);
     annotateFanaticalCards(document, games);
-    onlyBadge().dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-    expect(cardClicks).toBe(0);
+    document.querySelector('.card-product-name')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(cardClicks).toBe(1);
   });
 });

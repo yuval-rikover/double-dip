@@ -1,16 +1,10 @@
 import { BADGE_ATTR, createSteamBadge } from './badge';
-import type { SteamRef } from './steam';
+import type { SteamLookup } from './title-site';
 
 /** Game tiles in the bundle's tier grid. */
 const TILE_TITLE_SELECTOR = '.tier-item-view .item-title';
 /** The heading of each game's details panel (the carousel opened by a tile). */
 const DETAILS_TITLE_SELECTOR = '.tier-item-details-view .header-area h2';
-
-/**
- * Lookup result per title: a ref, null for "no Steam match", undefined for
- * "not resolved yet".
- */
-export type SteamLookup = (title: string) => SteamRef | null | undefined;
 
 export function collectHumbleTitles(doc: Document): string[] {
   const titles = [...doc.querySelectorAll(`${TILE_TITLE_SELECTOR}, ${DETAILS_TITLE_SELECTOR}`)].map(

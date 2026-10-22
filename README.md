@@ -1,8 +1,8 @@
 # Double Dip
 
 Chrome and Firefox extension that adds a Steam store link to each game on
-Fanatical and Humble Bundle bundle pages and Humble Choice months, and marks the
-games already in your Steam, GOG or Epic library.
+Fanatical, Humble Bundle and Green Man Gaming bundle pages and Humble Choice
+months, and marks the games already in your Steam, GOG or Epic library.
 
 ## How it works
 
@@ -19,6 +19,11 @@ games already in your Steam, GOG or Epic library.
   (no API key needed) for the rest. Results are cached in `storage.local`,
   hits for 30 days and misses for 1 day. Unmatched titles get "Search Steam".
 
+- **Green Man Gaming** (`greenmangamingbundles.com/bundles/*`): tiles list titles
+  only, so they go through the same title lookup as Humble bundles
+  (`lib/gmg-tiles.ts`, shared runner in `lib/title-site.ts`). GMG opens its
+  product popup from a capture-phase click listener, so badge clicks are
+  stopped at the window (`lib/badge.ts`).
 - **Humble Choice** (`/membership/home` and month pages like
   `/membership/september-2026`): Humble removes its product JSON before the
   extension runs, so the month's public page is fetched once — without cookies,

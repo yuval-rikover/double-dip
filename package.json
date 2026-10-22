@@ -1,6 +1,6 @@
 {
   "name": "double-dip",
-  "description": "Steam links and \"already owned\" markers (Steam, GOG, Epic) for games on Humble Bundle and Fanatical bundle pages.",
+  "description": "Steam links and \"already owned\" markers (Steam, GOG, Epic) on Humble Bundle, Humble Choice, Fanatical and Green Man Gaming bundles.",
   "private": true,
   "license": "MIT",
   "version": "0.1.0",

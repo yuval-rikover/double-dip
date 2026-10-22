@@ -26,8 +26,31 @@ export function createSteamBadge(
   link.rel = 'noopener noreferrer';
   link.textContent = game.steam ? 'Steam ↗' : 'Search Steam ↗';
   link.title = game.steam ? `Open ${game.name} on Steam` : `No Steam ID listed — search Steam for ${game.name}`;
-  // Tiles open a details view on click; keep our click from reaching the
-  // site's handlers so only the Steam tab opens.
-  link.addEventListener('click', (event) => event.stopPropagation());
+  guardBadgeClicks(doc);
   return link;
+}
+
+const guardedWindows = new WeakSet<Window>();
+
+/**
+ * Tiles open a details view on click, so a click on a badge must not reach
+ * the site's handlers — only the Steam tab should open. Stopping it on the
+ * badge isn't enough: some sites (Green Man Gaming) listen in the capture
+ * phase, which runs before the badge sees the click. So stop it at the very
+ * start, in a capture listener on the window. The link's default action —
+ * opening Steam — still happens.
+ */
+function guardBadgeClicks(doc: Document): void {
+  const win = doc.defaultView;
+  if (!win || guardedWindows.has(win)) return;
+  guardedWindows.add(win);
+  win.addEventListener(
+    'click',
+    (event) => {
+      const target = event.target as Node | null;
+      const element = target && target.nodeType === 1 ? (target as Element) : target?.parentElement;
+      if (element?.closest(`[${BADGE_ATTR}]`)) event.stopImmediatePropagation();
+    },
+    true,
+  );
 }

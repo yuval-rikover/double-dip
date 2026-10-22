@@ -9,7 +9,7 @@ export default defineConfig({
   manifest: ({ browser }) => ({
     name: 'Double Dip',
     description:
-      'Steam links and "already owned" markers (Steam, GOG, Epic) for games on Humble Bundle and Fanatical bundle pages.',
+      'Steam links and "already owned" markers (Steam, GOG, Epic) on Humble Bundle, Humble Choice, Fanatical and Green Man Gaming bundles.',
     permissions: ['storage'],
     // Called from the background script: Steam search and library, GOG
     // library, Epic order history, and ITAD id lookups.
