@@ -15,8 +15,8 @@ Steam links and "already owned" markers (Steam, GOG, Epic) for games on Humble B
 
 ## Detailed description
 
-Thinking about a Humble Bundle or Fanatical bundle? See at a glance which games
-you already own, and jump to any game's Steam page.
+Thinking about a Humble Bundle, a Humble Choice month or a Fanatical bundle? See
+at a glance which games you already own, and jump to any game's Steam page.
 
 On every bundle page, each game gets:
 • A "Steam ↗" link to its Steam store page — reviews, trailers, system requirements.
@@ -52,7 +52,7 @@ Fanatical bundle pages.
 | Permission | Justification |
 |---|---|
 | `storage` | Caches the user's owned-game IDs and game-ID lookups locally, so bundle pages show markers instantly and the stores aren't asked on every page load. |
-| Content scripts on `www.humblebundle.com/games/*`, `/software/*` and `www.fanatical.com/*` | Reads the games listed on bundle pages and adds the Steam links and owned markers to them. |
+| Content scripts on `www.humblebundle.com/games/*`, `/software/*`, `/membership/*` and `www.fanatical.com/*` | Reads the games listed on bundle and Humble Choice pages and adds the Steam links and owned markers to them. |
 | `https://store.steampowered.com/*` | Looks up a game's Steam page from its name (Humble pages don't list Steam IDs), and reads the user's owned Steam games with their existing Steam sign-in. |
 | `https://embed.gog.com/*` | Reads the user's owned GOG products with their existing GOG sign-in. |
 | `https://accounts.epicgames.com/*` | Reads the user's Epic Games Store order history with their existing Epic sign-in, to know which Epic games they own. |

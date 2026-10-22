@@ -15,6 +15,9 @@ browser.
 
 - **Bundle pages** (humblebundle.com, fanatical.com): the names of the games in
   the bundle, and for Fanatical, the Steam IDs the page itself provides.
+- **Humble Choice pages**: the month's game list and Steam IDs, read from the
+  month's public page, fetched without your Humble sign-in so it contains no
+  account data.
 - **Your store libraries**, using the sign-ins you already have in this browser:
   - **Steam**: the IDs of the apps and packages you own.
   - **GOG**: the IDs of the products you own.
@@ -51,8 +54,8 @@ In your browser's extension storage, on your device only:
 
 - Your owned-game IDs per store, refreshed hourly (Epic: incrementally, fully
   once a week).
-- Lookup results: game name → Steam ID, and Steam ID → GOG/Epic IDs, kept for up
-  to 30 days so pages load quickly.
+- Lookup results: game name → Steam ID, Humble Choice month → Steam IDs, and
+  Steam ID → GOG/Epic IDs, kept for up to 30 days so pages load quickly.
 
 Uninstalling the extension deletes all of it.
 
