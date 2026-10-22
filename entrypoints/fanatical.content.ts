@@ -29,11 +29,11 @@ export default defineContentScript({
 
     // Fanatical is a single-page app: re-run on every in-app navigation, and
     // keep watching the DOM because cards render (and re-render) after load.
-    const run = () => {
+    const run = (pathname: string) => {
       const thisRun = ++runId;
       observer?.disconnect();
       observer = null;
-      const page = parseFanaticalPath(location.pathname);
+      const page = parseFanaticalPath(pathname);
       if (!page) return;
 
       loadGames(fanaticalApiPath(page))
@@ -58,8 +58,10 @@ export default defineContentScript({
         .catch((error) => console.warn('[Double Dip]', error));
     };
 
-    run();
-    ctx.addEventListener(window, 'wxt:locationchange', run);
+    run(location.pathname);
+    // Use the event's URL, not `location`: with the Navigation API, WXT fires
+    // this before the new URL commits, so `location` still shows the old page.
+    ctx.addEventListener(window, 'wxt:locationchange', (event) => run(event.newUrl.pathname));
     ctx.onInvalidated(() => observer?.disconnect());
   },
 });
