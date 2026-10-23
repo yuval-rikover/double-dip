@@ -1,4 +1,5 @@
 import '../lib/badge.css';
+import '../lib/humble-choice.css';
 import {
   annotateChoice,
   choiceMonthSlug,
