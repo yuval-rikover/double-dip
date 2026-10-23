@@ -4,14 +4,47 @@
       <stop offset="0" stop-color="#2a475e"/>
       <stop offset="1" stop-color="#171a21"/>
     </linearGradient>
+    <linearGradient id="bowl" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fbf7ef"/>
+      <stop offset="1" stop-color="#c9bfae"/>
+    </linearGradient>
+    <radialGradient id="sauce" cx="0.4" cy="0.35" r="0.8">
+      <stop offset="0" stop-color="#ff8a45"/>
+      <stop offset="1" stop-color="#d9481c"/>
+    </radialGradient>
+    <!-- everything above the sauce line: the dipped part of the chip is hidden -->
+    <clipPath id="above"><rect x="0" y="0" width="128" height="85"/></clipPath>
+    <clipPath id="chip"><path d="M0 -36 L32 26 Q0 34 -32 26 Z"/></clipPath>
   </defs>
   <!-- tile -->
   <rect x="4" y="4" width="120" height="120" rx="26" fill="url(#bg)"/>
-  <!-- a bundle: three game cases, fanned -->
-  <rect x="22" y="30" width="46" height="62" rx="7" fill="#3d6a8c" transform="rotate(-14 45 61)"/>
-  <rect x="38" y="26" width="46" height="62" rx="7" fill="#4f8fbf" transform="rotate(-2 61 57)"/>
-  <rect x="54" y="24" width="46" height="62" rx="7" fill="#66c0f4" transform="rotate(10 77 55)"/>
-  <!-- owned -->
-  <circle cx="88" cy="90" r="25" fill="#5c9e1f" stroke="#171a21" stroke-width="6"/>
-  <path d="M76 90.5l8 8 16-17" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- bowl inside and the salsa -->
+  <ellipse cx="64" cy="84" rx="47" ry="11" fill="#8f8472"/>
+  <ellipse cx="64" cy="85" rx="42" ry="8" fill="url(#sauce)"/>
+  <!-- a tortilla chip with a gamepad on it, salsa-coated from the first dip -->
+  <g clip-path="url(#above)">
+    <g transform="translate(60 57) rotate(-16)">
+      <path d="M0 -36 L32 26 Q0 34 -32 26 Z" fill="#f2c14e"/>
+      <g clip-path="url(#chip)">
+        <circle cx="-9" cy="-14" r="1.6" fill="#d99a2b"/>
+        <circle cx="6" cy="-20" r="1.4" fill="#d99a2b"/>
+        <circle cx="-15" cy="4" r="1.4" fill="#d99a2b"/>
+        <path d="M-36 16 c6 -4 10 3 15 0 c5 -3 8 4 13 2 c5 -2 8 -5 14 -1 c5 3 8 -2 30 0 V40 H-36 Z" fill="url(#sauce)"/>
+      </g>
+      <path d="M0 -36 L32 26 Q0 34 -32 26 Z" fill="none" stroke="#7a4e12" stroke-width="3" stroke-linejoin="round"/>
+      <!-- d-pad and face buttons -->
+      <path d="M-15 -4 h4.5 v-4.5 h4.5 v4.5 h4.5 v4.5 h-4.5 v4.5 h-4.5 v-4.5 h-4.5 Z" fill="#2b2b33"/>
+      <circle cx="10" cy="-9" r="3.2" fill="#3fa9f5" stroke="#2b2b33" stroke-width="1.2"/>
+      <circle cx="5" cy="-4" r="3.2" fill="#f7d33b" stroke="#2b2b33" stroke-width="1.2"/>
+      <circle cx="15" cy="-4" r="3.2" fill="#e8413a" stroke="#2b2b33" stroke-width="1.2"/>
+      <circle cx="10" cy="1" r="3.2" fill="#3fbf4f" stroke="#2b2b33" stroke-width="1.2"/>
+    </g>
+  </g>
+  <!-- bowl front and rim -->
+  <path d="M17 84 A47 33 0 0 0 111 84 A47 11 0 0 1 17 84 Z" fill="url(#bowl)"/>
+  <path d="M17 84 A47 11 0 0 0 111 84" fill="none" stroke="#fbf7ef" stroke-width="3"/>
+  <!-- splashes -->
+  <circle cx="93" cy="66" r="3.5" fill="#ff8a45"/>
+  <circle cx="100" cy="57" r="2.5" fill="#ff8a45"/>
+  <circle cx="34" cy="68" r="2.5" fill="#ff8a45"/>
 </svg>
