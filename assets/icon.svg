@@ -26,18 +26,18 @@
     <g transform="translate(60 57) rotate(-16)">
       <path d="M0 -36 L32 26 Q0 34 -32 26 Z" fill="#f2c14e"/>
       <g clip-path="url(#chip)">
-        <circle cx="-9" cy="-14" r="1.6" fill="#d99a2b"/>
-        <circle cx="6" cy="-20" r="1.4" fill="#d99a2b"/>
-        <circle cx="-15" cy="4" r="1.4" fill="#d99a2b"/>
+        <circle cx="-6" cy="-12" r="1.6" fill="#d99a2b"/>
+        <circle cx="2" cy="-25" r="1.4" fill="#d99a2b"/>
+        <circle cx="-3" cy="-19" r="1.4" fill="#d99a2b"/>
         <path d="M-36 16 c6 -4 10 3 15 0 c5 -3 8 4 13 2 c5 -2 8 -5 14 -1 c5 3 8 -2 30 0 V40 H-36 Z" fill="url(#sauce)"/>
       </g>
       <path d="M0 -36 L32 26 Q0 34 -32 26 Z" fill="none" stroke="#7a4e12" stroke-width="3" stroke-linejoin="round"/>
       <!-- d-pad and face buttons -->
-      <path d="M-15 -4 h4.5 v-4.5 h4.5 v4.5 h4.5 v4.5 h-4.5 v4.5 h-4.5 v-4.5 h-4.5 Z" fill="#2b2b33"/>
-      <circle cx="10" cy="-9" r="3.2" fill="#3fa9f5" stroke="#2b2b33" stroke-width="1.2"/>
-      <circle cx="5" cy="-4" r="3.2" fill="#f7d33b" stroke="#2b2b33" stroke-width="1.2"/>
-      <circle cx="15" cy="-4" r="3.2" fill="#e8413a" stroke="#2b2b33" stroke-width="1.2"/>
-      <circle cx="10" cy="1" r="3.2" fill="#3fbf4f" stroke="#2b2b33" stroke-width="1.2"/>
+      <path d="M-14 0 h4 v-4 h4 v4 h4 v4 h-4 v4 h-4 v-4 h-4 Z" fill="#2b2b33"/>
+      <circle cx="8" cy="-2.5" r="2.8" fill="#3fa9f5" stroke="#2b2b33" stroke-width="1.2"/>
+      <circle cx="3.5" cy="2" r="2.8" fill="#f7d33b" stroke="#2b2b33" stroke-width="1.2"/>
+      <circle cx="12.5" cy="2" r="2.8" fill="#e8413a" stroke="#2b2b33" stroke-width="1.2"/>
+      <circle cx="8" cy="6.5" r="2.8" fill="#3fbf4f" stroke="#2b2b33" stroke-width="1.2"/>
     </g>
   </g>
   <!-- bowl front and rim -->
