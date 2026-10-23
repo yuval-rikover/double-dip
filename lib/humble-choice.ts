@@ -17,7 +17,7 @@ const MONTH_SLUG = new RegExp(`^(${MONTHS.join('|')})-(\\d{4})$`);
 const MONTH_HEADING = new RegExp(`^(${MONTHS.join('|')}) (\\d{4}) games$`, 'i');
 
 /** Game tiles in a Choice month's grid, and the element that holds each tile's image. */
-const TILE_SELECTOR = '.content-choice';
+export const CHOICE_TILE_SELECTOR = '.content-choice';
 const TILE_TITLE_SELECTOR = '.content-choice-title';
 const TILE_IMAGE_SELECTOR = '.choice-image-container';
 
@@ -72,7 +72,7 @@ export function parseChoiceMonth(html: string): ChoiceMonth | null {
 export type ChoiceLookup = (title: string) => SteamRef | null | 'not-steam' | undefined;
 
 export function collectChoiceTitles(doc: Document): string[] {
-  const titles = [...doc.querySelectorAll(`${TILE_SELECTOR} ${TILE_TITLE_SELECTOR}`)].map(
+  const titles = [...doc.querySelectorAll(`${CHOICE_TILE_SELECTOR} ${TILE_TITLE_SELECTOR}`)].map(
     (el) => el.textContent?.trim() ?? '',
   );
   return [...new Set(titles.filter(Boolean))];
@@ -81,7 +81,7 @@ export function collectChoiceTitles(doc: Document): string[] {
 /** Adds a Steam badge to each Choice tile whose title is resolved. Returns how many were added. */
 export function annotateChoice(doc: Document, lookup: ChoiceLookup): number {
   let added = 0;
-  for (const tile of doc.querySelectorAll(TILE_SELECTOR)) {
+  for (const tile of doc.querySelectorAll(CHOICE_TILE_SELECTOR)) {
     const name = tile.querySelector(TILE_TITLE_SELECTOR)?.textContent?.trim();
     if (!name || tile.querySelector(`[${BADGE_ATTR}]`)) continue;
     const steam = lookup(name);

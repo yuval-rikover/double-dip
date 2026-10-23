@@ -2,6 +2,7 @@ import '../lib/badge.css';
 import '../lib/humble-choice.css';
 import {
   annotateChoice,
+  CHOICE_TILE_SELECTOR,
   choiceMonthSlug,
   choiceMonthUrl,
   collectChoiceTitles,
@@ -10,7 +11,7 @@ import {
 } from '../lib/humble-choice';
 import type { ResolveSteamTitlesMessage, ResolveSteamTitlesResponse } from '../lib/messages';
 import { normalizeTitle } from '../lib/normalize';
-import { createOwnershipMarker, warmLibraries } from '../lib/ownership-client';
+import { createOwnershipMarker, createRatingMarker, warmLibraries } from '../lib/ownership-client';
 import type { SteamRef } from '../lib/steam';
 
 const MONTH_TTL = 30 * 24 * 60 * 60 * 1000;
@@ -43,6 +44,7 @@ export default defineContentScript({
   main(ctx) {
     warmLibraries();
     const markOwned = createOwnershipMarker();
+    const markRatings = createRatingMarker(CHOICE_TILE_SELECTOR);
     let month: ChoiceMonth | null = null;
     let slugRequested: string | null = null;
     // Used only if the month's data can't be loaded: look titles up on Steam.
@@ -55,6 +57,7 @@ export default defineContentScript({
         month ? (month[normalizeTitle(title)] ?? byTitle.get(title)) : fallback ? byTitle.get(title) : undefined,
       );
       markOwned();
+      markRatings();
     };
 
     const resolveTitle = async (title: string) => {

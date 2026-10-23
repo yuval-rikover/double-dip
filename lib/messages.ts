@@ -1,6 +1,7 @@
 import type { LibrarySummaries } from './library-summary';
 import type { OwnershipResult } from './ownership';
 import type { SteamRef } from './steam';
+import type { SteamRating } from './steam-ratings';
 
 /** Content script → background: find Steam entries for game titles. */
 export interface ResolveSteamTitlesMessage {
@@ -17,6 +18,14 @@ export interface GetOwnershipMessage {
 }
 
 export type GetOwnershipResponse = OwnershipResult;
+
+/** Content script → background: Steam review summaries for these Steam ids. */
+export interface GetSteamRatingsMessage {
+  type: 'getSteamRatings';
+  steamRefs: string[];
+}
+
+export type GetSteamRatingsResponse = Record<string, SteamRating | null>;
 
 /** Popup → background: library status per store; `refresh` re-reads them from the stores. */
 export interface GetLibraryStatusMessage {
@@ -38,6 +47,7 @@ export interface WarmLibrariesMessage {
 export type ExtensionMessage =
   | ResolveSteamTitlesMessage
   | GetOwnershipMessage
+  | GetSteamRatingsMessage
   | GetLibraryStatusMessage
   | WarmLibrariesMessage;
 
@@ -47,6 +57,7 @@ export function isExtensionMessage(message: unknown): message is ExtensionMessag
   return (
     (type === 'resolveSteamTitles' && Array.isArray(titles)) ||
     (type === 'getOwnership' && Array.isArray(steamRefs)) ||
+    (type === 'getSteamRatings' && Array.isArray(steamRefs)) ||
     type === 'getLibraryStatus' ||
     type === 'warmLibraries'
   );

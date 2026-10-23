@@ -47,6 +47,23 @@ li > .bsl-owned--inline > * {
   cursor: default;
 }
 
+/* Steam rating inside the badge, in Steam's review colors. */
+.bsl-rating {
+  font-weight: 700;
+}
+
+.bsl-rating--positive {
+  color: #66c0f4;
+}
+
+.bsl-rating--mixed {
+  color: #c9a96e;
+}
+
+.bsl-rating--negative {
+  color: #e0714f;
+}
+
 /* "Owned" marker: a green check, then one chip per store in its own colors. */
 .bsl-owned {
   position: absolute !important;

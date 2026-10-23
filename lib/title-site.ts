@@ -1,7 +1,7 @@
 import { browser } from 'wxt/browser';
 import type { ContentScriptContext } from 'wxt/utils/content-script-context';
 import type { ResolveSteamTitlesMessage, ResolveSteamTitlesResponse } from './messages';
-import { createOwnershipMarker, warmLibraries } from './ownership-client';
+import { createOwnershipMarker, createRatingMarker, warmLibraries } from './ownership-client';
 import type { SteamRef } from './steam';
 
 /** Lookup result per title: a ref, null for "no Steam match", undefined for "not resolved yet". */
@@ -12,22 +12,27 @@ export interface TitleSite {
   collectTitles(doc: Document): string[];
   /** Adds badges for the titles `lookup` can answer; must skip tiles already badged. */
   annotate(doc: Document, lookup: SteamLookup): void;
+  /** Matches a badge's tile, to spot tiles already showing the Steam rating. */
+  tileSelector: string;
 }
 
 /**
  * Runs a content script for a site whose tiles carry only a game title
  * (Humble bundles, Green Man Gaming bundles): each title is looked up on
  * Steam through the background — one request per title, so each badge
- * appears as soon as its own lookup finishes — and owned markers follow.
+ * appears as soon as its own lookup finishes — and owned markers and Steam
+ * ratings follow.
  * Keeps watching the page for tiles that render later.
  */
 export function runTitleSite(ctx: ContentScriptContext, site: TitleSite): void {
   const resolved = new Map<string, SteamRef | null>();
   const requested = new Set<string>();
   const markOwned = createOwnershipMarker();
+  const markRatings = createRatingMarker(site.tileSelector);
   const annotate = () => {
     site.annotate(document, (title) => resolved.get(title));
     markOwned();
+    markRatings();
   };
 
   const resolveTitle = async (title: string) => {

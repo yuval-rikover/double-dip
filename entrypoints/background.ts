@@ -8,6 +8,7 @@ import { isExtensionMessage, type ExtensionMessage } from '../lib/messages';
 import { getOwnership } from '../lib/ownership';
 import { steamRefsToShopIds, type CachedShopIds } from '../lib/shop-map';
 import { getSteamLibrary, type OwnedSteam } from '../lib/steam-library';
+import { getSteamRatings, type CachedRating } from '../lib/steam-ratings';
 import { resolveSteamTitles, SEARCH_CONCURRENCY, type CachedRef } from '../lib/steam-resolve';
 
 function keyValueCache<V>(): KeyValueCache<V> {
@@ -28,6 +29,7 @@ function libraryStore<T>(key: string): LibraryStore<T> {
 const fetchFn = (...args: Parameters<typeof fetch>) => fetch(...args);
 const titleCache = keyValueCache<CachedRef>();
 const shopIdCache = keyValueCache<CachedShopIds>();
+const ratingCache = keyValueCache<CachedRating>();
 const steamStore = libraryStore<OwnedSteam>('steam-library');
 const gogStore = libraryStore<OwnedGog>('gog-library');
 
@@ -68,6 +70,8 @@ function handle(message: ExtensionMessage): Promise<unknown> {
         epic: () => epic.now(),
         shopIds: (refs) => steamRefsToShopIds(refs, { fetch: fetchFn, cache: shopIdCache }),
       });
+    case 'getSteamRatings':
+      return getSteamRatings(message.steamRefs, { fetch: fetchFn, cache: ratingCache });
     case 'getLibraryStatus':
       return libraryStatus(message.refresh);
     case 'warmLibraries':

@@ -1,10 +1,10 @@
 # Privacy policy — Double Dip
 
-_Last updated: 2026-10-22_
+_Last updated: 2026-10-23_
 
 Double Dip is a browser extension that adds Steam store links to games on
-Humble Bundle, Humble Choice, Fanatical and Green Man Gaming bundle pages, and marks the games you already own
-on Steam, GOG or the Epic Games Store. This policy explains what it reads, where
+Humble Bundle, Humble Choice, Fanatical and Green Man Gaming bundle pages, shows each game's
+Steam rating, and marks the games you already own on Steam, GOG or the Epic Games Store. This policy explains what it reads, where
 that goes, and what it keeps.
 
 **In short:** nothing is sent to the developer. There are no analytics, no ads
@@ -37,6 +37,7 @@ The extension talks only to these services, and only to do its job:
 | Sent to | What | Why |
 |---|---|---|
 | Steam (`store.steampowered.com`) | Game names from Humble and Green Man Gaming bundle pages | To find each game's Steam store page |
+| Steam (`api.steampowered.com`) | Steam IDs of games on the page | To show each game's Steam rating |
 | IsThereAnyDeal (`api.isthereanydeal.com`) | Game names Steam couldn't match, and Steam IDs of games on the page | To find the game's Steam, GOG and Epic IDs |
 | Steam, GOG (`embed.gog.com`), Epic (`accounts.epicgames.com`) | Requests for your own library, sent with your existing sign-in | To check which games you own |
 
@@ -56,15 +57,16 @@ In your browser's extension storage, on your device only:
 - Your owned-game IDs per store, refreshed hourly (Epic: incrementally, fully
   once a week).
 - Lookup results: game name → Steam ID, Humble Choice month → Steam IDs, and
-  Steam ID → GOG/Epic IDs, kept for up to 30 days so pages load quickly.
+  Steam ID → GOG/Epic IDs, kept for up to 30 days so pages load quickly;
+  Steam ratings, kept for a week.
 
 Uninstalling the extension deletes all of it.
 
 ## Sharing and sale
 
 The extension does not sell, share or transfer your data to anyone, and does not
-use it for anything other than showing links and ownership markers on bundle
-pages.
+use it for anything other than showing links, ratings and ownership markers on
+bundle pages.
 
 ## Contact
 

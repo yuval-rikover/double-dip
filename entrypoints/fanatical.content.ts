@@ -1,8 +1,8 @@
 import '../lib/badge.css';
 import { extractBundleGames, fanaticalApiPath, parseFanaticalPath, type BundleGame } from '../lib/fanatical';
-import { annotateFanaticalCards, annotateFanaticalPackLists } from '../lib/fanatical-cards';
+import { annotateFanaticalCards, annotateFanaticalPackLists, FANATICAL_TILE_SELECTOR } from '../lib/fanatical-cards';
 import type { ResolveSteamTitlesMessage, ResolveSteamTitlesResponse } from '../lib/messages';
-import { createOwnershipMarker, warmLibraries } from '../lib/ownership-client';
+import { createOwnershipMarker, createRatingMarker, warmLibraries } from '../lib/ownership-client';
 import type { SteamRef } from '../lib/steam';
 
 export default defineContentScript({
@@ -10,6 +10,7 @@ export default defineContentScript({
   main(ctx) {
     const gamesByApiPath = new Map<string, Promise<BundleGame[]>>();
     const markOwned = createOwnershipMarker();
+    const markRatings = createRatingMarker(FANATICAL_TILE_SELECTOR);
     // Packs carry only their games' titles: those are looked up on Steam.
     const resolved = new Map<string, SteamRef | null>();
     const requested = new Set<string>();
@@ -63,6 +64,7 @@ export default defineContentScript({
             annotateFanaticalCards(document, games, lookup);
             annotateFanaticalPackLists(document, games, lookup);
             markOwned();
+            markRatings();
           };
           annotate();
           for (const { includes } of games) {
