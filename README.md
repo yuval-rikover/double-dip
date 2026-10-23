@@ -11,7 +11,10 @@ months, and marks the games already in your Steam, GOG or Epic library.
   `/api/pick-and-mix/<slug>/<lang>` for build-your-own bundles). Each game there
   carries its Steam app id. Cards are matched to games by normalized title
   (`lib/normalize.ts`). Games without an id get a "Search Steam" link instead;
-  mystery-bundle placeholders get nothing.
+  mystery-bundle placeholders get nothing. Packs ("Triple Pack") list their
+  games by title only; those go through the title lookup below. The card gets
+  a "3 games" label and an owned count ("2/3"), and each game in the pack's
+  details list gets its own Steam link (`lib/fanatical-cards.ts`).
 - **Humble Bundle**: tiles carry only a title (the page's own JSON is removed
   once it loads), so the background script looks each title up
   (`lib/steam-resolve.ts`): Steam's store search, accepting only an exact

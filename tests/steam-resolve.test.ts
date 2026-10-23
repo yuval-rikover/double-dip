@@ -93,6 +93,13 @@ describe('resolveSteamTitles', () => {
     expect(cache.store[cacheKey('Kiln')]).toEqual({ ref: { type: 'app', id: 1165990 }, at: NOW });
   });
 
+  it('searches without a " DLC" suffix or " - ", which Steam search finds nothing for', async () => {
+    const { fn } = fakeFetch({ steam: { 'Redout Mars Pack': [{ type: 'app', id: 627440, name: 'Redout - Mars Pack' }] } });
+    expect(await resolveSteamTitles(['Redout - Mars Pack DLC'], { fetch: fn, cache, now: () => NOW })).toEqual({
+      'Redout - Mars Pack DLC': { type: 'app', id: 627440 },
+    });
+  });
+
   it('falls back to ITAD when Steam has no exact match', async () => {
     const { fn } = fakeFetch({
       itadIds: { 'Brütal Legend': 'itad-1' },

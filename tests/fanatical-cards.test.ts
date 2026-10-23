@@ -1,12 +1,16 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { BundleGame } from '../lib/fanatical';
-import { annotateFanaticalCards } from '../lib/fanatical-cards';
+import { annotateFanaticalCards, annotateFanaticalPackLists } from '../lib/fanatical-cards';
+import type { SteamLookup } from '../lib/title-site';
 
 const games: BundleGame[] = [
   { name: 'Haste', steam: { type: 'app', id: 1796470 } },
   { name: 'Critter Café', steam: null },
+  { name: 'AMID EVIL & DUSK Double Pack', steam: null, includes: ['AMID EVIL', 'DUSK'] },
 ];
+const packLookup: SteamLookup = (title) =>
+  ({ 'AMID EVIL': { type: 'app', id: 673130 } as const, DUSK: null })[title];
 
 function card(cls: string, heading: 'h2' | 'h3', name: string): string {
   return `<article class="${cls} faux-block-link"><div class="card-overlay"><${heading} class="card-product-name">${name}</${heading}></div></article>`;
@@ -80,5 +84,54 @@ describe('annotateFanaticalCards', () => {
     annotateFanaticalCards(document, games);
     document.querySelector('.card-product-name')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(cardClicks).toBe(1);
+  });
+
+  it('labels a pack once all its games are looked up, without a link', () => {
+    document.body.innerHTML = card('PickAndMixCard', 'h2', 'AMID EVIL &amp; DUSK Double Pack');
+    expect(annotateFanaticalCards(document, games, (title) => (title === 'DUSK' ? undefined : packLookup(title)))).toBe(0);
+    expect(annotateFanaticalCards(document, games, packLookup)).toBe(1);
+    const label = onlyBadge();
+    expect(label.tagName).toBe('SPAN');
+    expect(label.textContent).toBe('2 games');
+    expect(label.title).toBe('Pack of 2: AMID EVIL, DUSK');
+    expect(JSON.parse(label.getAttribute('data-bsl-pack')!)).toEqual([
+      ['AMID EVIL', 'app/673130'],
+      ['DUSK', null],
+    ]);
+  });
+
+  it("lets a click on a pack's label reach the card", () => {
+    document.body.innerHTML = card('PickAndMixCard', 'h2', 'AMID EVIL &amp; DUSK Double Pack');
+    let cardClicks = 0;
+    document.querySelector('article')!.addEventListener('click', () => cardClicks++);
+    annotateFanaticalCards(document, games, packLookup);
+    onlyBadge().dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(cardClicks).toBe(1);
+  });
+});
+
+describe('annotateFanaticalPackLists', () => {
+  const panel = (...items: string[]) =>
+    `<div class="info-container"><h4>This bundle includes:</h4><ul>${items.map((item) => `<li>${item}</li>`).join('')}</ul></div>`;
+
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it("badges each game in a pack's details list", () => {
+    document.body.innerHTML = panel('AMID EVIL', 'DUSK');
+    expect(annotateFanaticalPackLists(document, games, packLookup)).toBe(2);
+    const [hit, miss] = badges();
+    expect(hit!.href).toBe('https://store.steampowered.com/app/673130/');
+    expect(hit!.classList).toContain('bsl-badge--inline');
+    expect(hit!.parentElement?.tagName).toBe('LI');
+    expect(miss!.classList).toContain('bsl-badge--search');
+  });
+
+  it('skips games not looked up yet, other lists, and items already badged', () => {
+    document.body.innerHTML = panel('AMID EVIL', 'Something Else') + '<ul><li>DUSK</li></ul>';
+    expect(annotateFanaticalPackLists(document, games, (title) => (title === 'AMID EVIL' ? undefined : null))).toBe(0);
+    expect(annotateFanaticalPackLists(document, games, packLookup)).toBe(1);
+    expect(annotateFanaticalPackLists(document, games, packLookup)).toBe(0);
   });
 });

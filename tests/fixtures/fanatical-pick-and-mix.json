@@ -171,6 +171,21 @@
     "type": "app",
     "id": 1456200
    }
+  },
+  {
+   "_id": "6a04567f166949ebf6208cf6",
+   "name": "Rogue Trooper, AvP Classic 2000 & Dredd Triple Pack",
+   "type": "bundle",
+   "mystery": false,
+   "steam": {
+    "type": "app",
+    "id": null
+   },
+   "gameNames": [
+    "Rogue Trooper Redux",
+    "Aliens versus Predator Classic 2000",
+    "Judge Dredd: Dredd vs. Death"
+   ]
   }
  ]
 }

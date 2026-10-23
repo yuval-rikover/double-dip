@@ -1,13 +1,20 @@
 import '../lib/badge.css';
 import { extractBundleGames, fanaticalApiPath, parseFanaticalPath, type BundleGame } from '../lib/fanatical';
-import { annotateFanaticalCards } from '../lib/fanatical-cards';
+import { annotateFanaticalCards, annotateFanaticalPackLists } from '../lib/fanatical-cards';
+import type { ResolveSteamTitlesMessage, ResolveSteamTitlesResponse } from '../lib/messages';
 import { createOwnershipMarker, warmLibraries } from '../lib/ownership-client';
+import type { SteamRef } from '../lib/steam';
 
 export default defineContentScript({
   matches: ['*://www.fanatical.com/*'],
   main(ctx) {
     const gamesByApiPath = new Map<string, Promise<BundleGame[]>>();
     const markOwned = createOwnershipMarker();
+    // Packs carry only their games' titles: those are looked up on Steam.
+    const resolved = new Map<string, SteamRef | null>();
+    const requested = new Set<string>();
+    const lookup = (title: string) => resolved.get(title);
+    let annotate = () => {};
     let observer: MutationObserver | null = null;
     let runId = 0;
 
@@ -27,6 +34,18 @@ export default defineContentScript({
       return games;
     };
 
+    /** Looks up one pack's games in a single request: its badge waits for all of them. */
+    const resolvePack = async (titles: string[]) => {
+      const message: ResolveSteamTitlesMessage = { type: 'resolveSteamTitles', titles };
+      const response = (await browser.runtime
+        .sendMessage(message)
+        .catch((error) => console.warn('[Double Dip]', error))) as ResolveSteamTitlesResponse | undefined;
+      if (ctx.isInvalid) return;
+      // Titles the background couldn't answer for still get a search link.
+      for (const title of titles) resolved.set(title, response?.[title] ?? null);
+      annotate();
+    };
+
     // Fanatical is a single-page app: re-run on every in-app navigation, and
     // keep watching the DOM because cards render (and re-render) after load.
     const run = (pathname: string) => {
@@ -40,11 +59,18 @@ export default defineContentScript({
       loadGames(fanaticalApiPath(page))
         .then((games) => {
           if (thisRun !== runId || ctx.isInvalid) return;
-          const annotate = () => {
-            annotateFanaticalCards(document, games);
+          annotate = () => {
+            annotateFanaticalCards(document, games, lookup);
+            annotateFanaticalPackLists(document, games, lookup);
             markOwned();
           };
           annotate();
+          for (const { includes } of games) {
+            const titles = includes?.filter((title) => !requested.has(title));
+            if (!titles?.length) continue;
+            titles.forEach((title) => requested.add(title));
+            void resolvePack(titles);
+          }
           let scheduled = false;
           observer = new MutationObserver(() => {
             if (scheduled) return;

@@ -46,9 +46,17 @@ describe('extractBundleGames', () => {
 
   it('reads build-your-own products, including a sub-bundle with no id', () => {
     const games = extractBundleGames(pickAndMix);
-    expect(games).toHaveLength(17);
+    expect(games).toHaveLength(18);
     expect(games).toContainEqual({ name: 'Dreamscaper', steam: { type: 'app', id: 1040420 } });
     expect(games).toContainEqual({ name: 'Police Stories - Complete Edition', steam: null });
+  });
+
+  it("keeps a pack's game titles", () => {
+    expect(extractBundleGames(pickAndMix)).toContainEqual({
+      name: 'Rogue Trooper, AvP Classic 2000 & Dredd Triple Pack',
+      steam: null,
+      includes: ['Rogue Trooper Redux', 'Aliens versus Predator Classic 2000', 'Judge Dredd: Dredd vs. Death'],
+    });
   });
 
   it('de-duplicates games repeated across tiers', () => {

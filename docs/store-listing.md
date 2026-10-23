@@ -23,6 +23,8 @@ On every bundle page, each game gets:
 • A "Steam ↗" link to its Steam store page — reviews, trailers, system requirements.
 • A "✓ Owned" marker if it's already in your library, naming where: Steam, GOG
   and/or Epic Games Store.
+• For multi-game packs on Fanatical: how many of the games you own ("2/3"), and
+  a Steam link for each game in the pack's details.
 
 How it works:
 • Uses the sign-ins you already have in this browser — no extra accounts, no

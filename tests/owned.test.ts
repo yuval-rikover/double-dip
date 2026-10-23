@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it } from 'vitest';
-import { createSteamBadge } from '../lib/badge';
+import { createPackBadge, createSteamBadge, type PackGame } from '../lib/badge';
 import { markOwnedBadges, uncheckedSteamRefs, type OwnershipLookup } from '../lib/owned';
 import type { Store } from '../lib/ownership';
 
@@ -71,5 +71,63 @@ describe('markOwnedBadges', () => {
     tile({ name: 'A', steam: { type: 'app', id: 1 } });
     tile({ name: 'A again', steam: { type: 'app', id: 1 } });
     expect(uncheckedSteamRefs(document)).toEqual(['app/1']);
+  });
+});
+
+describe('markOwnedBadges on packs', () => {
+  const pack = (games: PackGame[]) => {
+    const el = document.createElement('div');
+    el.append(createPackBadge(document, games));
+    document.body.append(el);
+    return el;
+  };
+  const trio: PackGame[] = [
+    { name: 'Brutal Legend', steam: { type: 'app', id: 225260 } },
+    { name: 'Psychonauts', steam: { type: 'app', id: 3830 } },
+    { name: 'Kiln', steam: { type: 'app', id: 1165990 } },
+  ];
+
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('asks about every game in the pack', () => {
+    pack(trio);
+    expect(uncheckedSteamRefs(document)).toEqual(['app/225260', 'app/3830', 'app/1165990']);
+  });
+
+  it('shows how many of the games are owned, and where', () => {
+    const el = pack(trio);
+    expect(markOwnedBadges(document, lookup)).toBe(1);
+    const marker = el.querySelector<HTMLElement>('[data-bsl-owned]')!;
+    expect(marker.classList).toContain('bsl-owned--partial');
+    expect(marker.querySelector('.bsl-owned__check')?.textContent).toBe('2/3');
+    expect([...marker.querySelectorAll('.bsl-chip')].map((chip) => chip.textContent)).toEqual(['Steam', 'GOG']);
+    expect(marker.title).toBe('Own 2 of 3: Brutal Legend (Steam); Psychonauts (Steam, GOG)');
+  });
+
+  it('shows the plain check when every game is owned', () => {
+    const el = pack(trio.slice(0, 2));
+    markOwnedBadges(document, lookup);
+    const marker = el.querySelector<HTMLElement>('[data-bsl-owned]')!;
+    expect(marker.classList).not.toContain('bsl-owned--partial');
+    expect(marker.querySelector('.bsl-owned__check')?.textContent).toBe('✓');
+    expect(marker.title).toBe('Own all 2: Brutal Legend (Steam); Psychonauts (Steam, GOG)');
+  });
+
+  it('counts a game not on Steam as not owned', () => {
+    const el = pack([trio[0]!, { name: 'Critter Café', steam: null }]);
+    markOwnedBadges(document, lookup);
+    expect(el.querySelector('.bsl-owned__check')?.textContent).toBe('1/2');
+  });
+
+  it('waits until every game has an answer, and marks nothing when none are owned', () => {
+    pack([trio[0]!, { name: 'Later', steam: { type: 'app', id: 42 } }]);
+    expect(markOwnedBadges(document, lookup)).toBe(0);
+    expect(uncheckedSteamRefs(document)).toEqual(['app/225260', 'app/42']);
+    document.body.innerHTML = '';
+    pack([trio[2]!]);
+    expect(markOwnedBadges(document, lookup)).toBe(0);
+    expect(uncheckedSteamRefs(document)).toEqual([]);
   });
 });

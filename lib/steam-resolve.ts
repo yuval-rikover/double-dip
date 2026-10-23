@@ -91,11 +91,16 @@ interface SteamSearchItem {
 
 /** Returns the exact-name match, null when Steam answered without one. */
 async function searchSteam(title: string, fetchFn: typeof fetch): Promise<SteamRef | null> {
-  const url = `https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(title)}&l=english&cc=US`;
+  // Fanatical names DLC "Redout - Mars Pack DLC"; Steam's name has no such
+  // suffix. Steam's search also finds nothing for a term with " - " in it
+  // ("Redout - Mars Pack"), though it finds "Redout Mars Pack".
+  const withoutSuffix = title.replace(/\s+DLC$/i, '');
+  const term = withoutSuffix.replace(/\s+-\s+/g, ' ');
+  const url = `https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(term)}&l=english&cc=US`;
   const response = await fetchFn(url);
   if (!response.ok) throw new Error(`Steam search returned ${response.status}`);
   const { items = [] } = (await response.json()) as { items?: SteamSearchItem[] };
-  return pickExactMatch(items, title);
+  return pickExactMatch(items, title) ?? (withoutSuffix === title ? null : pickExactMatch(items, withoutSuffix));
 }
 
 export function pickExactMatch(items: SteamSearchItem[], title: string): SteamRef | null {

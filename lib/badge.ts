@@ -4,6 +4,14 @@ import { formatSteamRef, steamSearchUrl, steamStoreUrl, type SteamRef } from './
 export const BADGE_ATTR = 'data-bsl-badge';
 /** On a Steam badge with a known id: the id, as "app/123" or "sub/456". */
 export const STEAM_REF_ATTR = 'data-bsl-steam';
+/** On a pack badge: the games inside, as JSON `[title, "app/123" | null][]`. */
+export const PACK_ATTR = 'data-bsl-pack';
+
+/** A game in a pack, with its Steam id once looked up (null: not on Steam). */
+export interface PackGame {
+  name: string;
+  steam: SteamRef | null;
+}
 
 /**
  * A small "Steam" link for a game tile. Without a known Steam id it links to a
@@ -30,6 +38,24 @@ export function createSteamBadge(
   return link;
 }
 
+/**
+ * A "3 games" label for a pack: it has no single Steam page, so this is not a
+ * link. Hovering lists the games; the site's own details view lists them too,
+ * where each gets its own Steam badge.
+ */
+export function createPackBadge(doc: Document, games: PackGame[]): HTMLElement {
+  const label = doc.createElement('span');
+  label.setAttribute(BADGE_ATTR, '');
+  label.setAttribute(
+    PACK_ATTR,
+    JSON.stringify(games.map((game) => [game.name, game.steam ? formatSteamRef(game.steam) : null])),
+  );
+  label.classList.add('bsl-badge', 'bsl-badge--pack');
+  label.textContent = `${games.length} games`;
+  label.title = `Pack of ${games.length}: ${games.map((game) => game.name).join(', ')}`;
+  return label;
+}
+
 const guardedWindows = new WeakSet<Window>();
 
 /**
@@ -38,7 +64,7 @@ const guardedWindows = new WeakSet<Window>();
  * badge isn't enough: some sites (Green Man Gaming) listen in the capture
  * phase, which runs before the badge sees the click. So stop it at the very
  * start, in a capture listener on the window. The link's default action —
- * opening Steam — still happens.
+ * opening Steam — still happens. Labels that aren't links let clicks through.
  */
 function guardBadgeClicks(doc: Document): void {
   const win = doc.defaultView;
@@ -49,7 +75,7 @@ function guardBadgeClicks(doc: Document): void {
     (event) => {
       const target = event.target as Node | null;
       const element = target && target.nodeType === 1 ? (target as Element) : target?.parentElement;
-      if (element?.closest(`[${BADGE_ATTR}]`)) event.stopImmediatePropagation();
+      if (element?.closest(`a[${BADGE_ATTR}]`)) event.stopImmediatePropagation();
     },
     true,
   );

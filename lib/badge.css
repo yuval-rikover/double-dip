@@ -26,6 +26,27 @@
   margin: 4px 0;
 }
 
+/* Inside a pack's game list: smaller, to sit on the title's line. */
+li > .bsl-badge.bsl-badge--inline,
+li > .bsl-owned--inline {
+  margin: 0 0 0 6px !important;
+  font-size: 11px;
+  vertical-align: 1px;
+}
+
+li > .bsl-badge.bsl-badge--inline,
+li > .bsl-owned--inline > * {
+  padding: 1px 6px;
+}
+
+/* A pack's "3 games" label: not a link, so no hover change. */
+.bsl-badge.bsl-badge--pack,
+.bsl-badge.bsl-badge--pack:hover {
+  background: #171a21;
+  color: #c7d5e0 !important;
+  cursor: default;
+}
+
 /* "Owned" marker: a green check, then one chip per store in its own colors. */
 .bsl-owned {
   position: absolute !important;
@@ -55,6 +76,11 @@
 .bsl-owned__check {
   background: #5c9e1f;
   color: #fff !important;
+}
+
+/* A pack where only some games are owned: "2/3" in amber. */
+.bsl-owned--partial .bsl-owned__check {
+  background: #c98a12;
 }
 
 .bsl-chip--steam {
