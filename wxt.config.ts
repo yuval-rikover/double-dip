@@ -10,7 +10,10 @@ export default defineConfig({
   // screenshots (third-party game art, git-ignored).
   zip: { excludeSources: ['store-assets/**'] },
   manifest: ({ browser }) => ({
-    name: 'Double Dip',
+    // The store title, and searchable there; short_name is used where space
+    // is tight (extensions menu, toolbar tooltip).
+    name: 'Double Dip: Already-Owned Check for Game Bundles',
+    short_name: 'Double Dip',
     description:
       'Steam links, ratings and "owned" markers (Steam, GOG, Epic) on Humble Bundle, Humble Choice, Fanatical and Green Man Gaming bundles.',
     permissions: ['storage'],

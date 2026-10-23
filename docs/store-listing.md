@@ -4,10 +4,11 @@ Drafts to paste into the developer dashboards.
 
 ## Name
 
-Double Dip
+Double Dip: Already-Owned Check for Game Bundles
 
-Optional longer store title (Chrome allows 75 characters), which helps search:
-"Double Dip – already-owned check for game bundles"
+This is the manifest `name` (48 characters; Chrome allows 75, Firefox 50), so it
+is the store title in both stores and is searchable. The manifest `short_name`
+is "Double Dip", used where space is tight.
 
 ## Short description (≤ 132 characters; also the manifest `description`)
 
