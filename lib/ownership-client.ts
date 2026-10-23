@@ -17,7 +17,11 @@ const BATCH_WINDOW_MS = 60;
 /** Asks the background to start loading the libraries while the page renders. */
 export function warmLibraries(): void {
   const message: WarmLibrariesMessage = { type: 'warmLibraries' };
-  browser.runtime.sendMessage(message).catch(() => undefined);
+  try {
+    browser.runtime.sendMessage(message).catch(() => undefined);
+  } catch {
+    // Throws synchronously once the extension was reloaded under this page.
+  }
 }
 
 /**

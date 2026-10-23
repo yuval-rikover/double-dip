@@ -99,7 +99,7 @@ export default defineContentScript({
     rescan();
     let scheduled = false;
     const observer = new MutationObserver(() => {
-      if (scheduled) return;
+      if (scheduled || ctx.isInvalid) return;
       scheduled = true;
       requestAnimationFrame(() => {
         scheduled = false;

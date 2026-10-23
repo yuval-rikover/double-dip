@@ -50,6 +50,8 @@ export default defineContentScript({
     // Fanatical is a single-page app: re-run on every in-app navigation, and
     // keep watching the DOM because cards render (and re-render) after load.
     const run = (pathname: string) => {
+      // Left behind by an extension reload: the extension can't be reached.
+      if (ctx.isInvalid) return;
       const thisRun = ++runId;
       observer?.disconnect();
       observer = null;
@@ -75,7 +77,7 @@ export default defineContentScript({
           }
           let scheduled = false;
           observer = new MutationObserver(() => {
-            if (scheduled) return;
+            if (scheduled || ctx.isInvalid) return;
             scheduled = true;
             requestAnimationFrame(() => {
               scheduled = false;
