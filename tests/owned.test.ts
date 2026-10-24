@@ -36,7 +36,7 @@ describe('markOwnedBadges', () => {
     ]);
     const marker = two.querySelector<HTMLElement>('[data-bsl-owned]')!;
     expect(marker.querySelector('.bsl-owned__check')?.textContent).toBe('✓');
-    expect(marker.title).toBe('Owned on Steam and GOG');
+    expect(marker.getAttribute('data-bsl-tip')).toBe('Owned on Steam and GOG');
     expect(marker.getAttribute('aria-label')).toBe('Owned on Steam and GOG');
   });
 
@@ -103,7 +103,8 @@ describe('markOwnedBadges on packs', () => {
     expect(marker.classList).toContain('bsl-owned--partial');
     expect(marker.querySelector('.bsl-owned__check')?.textContent).toBe('2/3');
     expect([...marker.querySelectorAll('.bsl-chip')].map((chip) => chip.textContent)).toEqual(['Steam', 'GOG']);
-    expect(marker.title).toBe('Own 2 of 3: Brutal Legend (Steam); Psychonauts (Steam, GOG)');
+    expect(marker.getAttribute('data-bsl-tip')).toBe('Own 2 of 3\nBrutal Legend (Steam)\nPsychonauts (Steam, GOG)');
+    expect(marker.getAttribute('aria-label')).toBe('Own 2 of 3. Brutal Legend (Steam). Psychonauts (Steam, GOG)');
   });
 
   it('shows the plain check when every game is owned', () => {
@@ -112,7 +113,7 @@ describe('markOwnedBadges on packs', () => {
     const marker = el.querySelector<HTMLElement>('[data-bsl-owned]')!;
     expect(marker.classList).not.toContain('bsl-owned--partial');
     expect(marker.querySelector('.bsl-owned__check')?.textContent).toBe('✓');
-    expect(marker.title).toBe('Own all 2: Brutal Legend (Steam); Psychonauts (Steam, GOG)');
+    expect(marker.getAttribute('data-bsl-tip')).toBe('Own all 2\nBrutal Legend (Steam)\nPsychonauts (Steam, GOG)');
   });
 
   it('counts a game not on Steam as not owned', () => {

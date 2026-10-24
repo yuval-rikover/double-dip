@@ -31,7 +31,8 @@ describe('markRatedBadges', () => {
     expect(markRatedBadges(document, lookup, '.tile')).toBe(1);
     expect(badge.textContent).toBe('Steam 93% ↗');
     expect(badge.querySelector('.bsl-rating')?.className).toBe('bsl-rating bsl-rating--positive');
-    expect(badge.title).toBe('Open Game 673130 on Steam · Very Positive: 93% of 6,681 reviews');
+    expect(badge.getAttribute('data-bsl-tip')).toBe('Game 673130\nVery Positive · 93% of 6,681 reviews\nOpen on Steam');
+    expect(badge.title).toBe('');
     expect(badge.href).toBe('https://store.steampowered.com/app/673130/');
   });
 
@@ -41,6 +42,15 @@ describe('markRatedBadges', () => {
     markRatedBadges(document, lookup, '.tile');
     expect(mixed.querySelector('.bsl-rating')?.classList).toContain('bsl-rating--mixed');
     expect(negative.querySelector('.bsl-rating')?.classList).toContain('bsl-rating--negative');
+  });
+
+  it('fades the percentage when there are under 50 reviews, and says why', () => {
+    const few = tile(2);
+    const many = tile(1);
+    markRatedBadges(document, lookup, '.tile');
+    expect(few.querySelector('.bsl-rating')?.classList).toContain('bsl-rating--few');
+    expect(few.getAttribute('data-bsl-tip')).toBe('Game 2\nNegative · 20% of 40 reviews, too few to go by\nOpen on Steam');
+    expect(many.querySelector('.bsl-rating')?.classList).not.toContain('bsl-rating--few');
   });
 
   it('leaves games without reviews as plain "Steam ↗"', () => {

@@ -69,6 +69,34 @@ li > .bsl-owned--inline > * {
   color: #e0714f;
 }
 
+/* Under 50 reviews: the percentage says little, so it's faded. */
+.bsl-rating--few {
+  opacity: 0.55;
+}
+
+/* The tooltip, on <body>. Resets what sites set on every div. */
+.bsl-tip {
+  position: fixed !important;
+  z-index: 2147483647 !important;
+  max-width: 320px;
+  margin: 0 !important;
+  padding: 6px 9px;
+  border-radius: 6px;
+  background: #171a21;
+  color: #c7d5e0 !important;
+  font: 400 12px/1.45 system-ui, sans-serif;
+  letter-spacing: normal;
+  text-align: left;
+  text-transform: none;
+  box-shadow: var(--bsl-edge);
+  pointer-events: none;
+}
+
+.bsl-tip strong {
+  color: #fff !important;
+  font-weight: 600;
+}
+
 /* "Owned" marker: a green check, then one chip per store in its own colors. */
 .bsl-owned {
   position: absolute !important;

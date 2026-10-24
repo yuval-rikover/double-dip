@@ -1,5 +1,6 @@
 import { PACK_ATTR, STEAM_REF_ATTR } from './badge';
 import { STORE_NAMES, type Store } from './ownership';
+import { setTip } from './tooltip';
 
 const STORES = Object.keys(STORE_NAMES) as Store[];
 
@@ -75,13 +76,13 @@ export function markOwnedBadges(doc: Document, lookup: OwnershipLookup): number 
 /**
  * For a pack: the green check when every game in it is owned, else "2/3" in
  * amber. Chips name every store holding any of them; the tooltip says which
- * game is where.
+ * game is where, one per line.
  */
 function createPackOwnedMarker(doc: Document, owned: OwnedGame[], total: number): HTMLElement {
   const stores = STORES.filter((store) => owned.some((game) => game.stores.includes(store)));
   const where = owned.map((game) => `${game.title} (${game.stores.map((store) => STORE_NAMES[store]).join(', ')})`);
   const all = owned.length === total;
-  const label = all ? `Own all ${total}: ${where.join('; ')}` : `Own ${owned.length} of ${total}: ${where.join('; ')}`;
+  const label = [all ? `Own all ${total}` : `Own ${owned.length} of ${total}`, ...where].join('\n');
   const marker = createOwnedMarker(doc, stores, false, label);
   if (!all) {
     marker.classList.add('bsl-owned--partial');
@@ -100,9 +101,9 @@ function createOwnedMarker(
   const marker = doc.createElement('span');
   marker.setAttribute(OWNED_ATTR, stores.join(' '));
   marker.className = inline ? 'bsl-owned bsl-owned--inline' : 'bsl-owned';
-  marker.title = label;
   marker.setAttribute('role', 'img');
-  marker.setAttribute('aria-label', label);
+  marker.setAttribute('aria-label', label.split('\n').join('. '));
+  setTip(marker, label);
   const check = doc.createElement('span');
   check.className = 'bsl-owned__check';
   check.textContent = '✓';

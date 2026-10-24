@@ -93,7 +93,7 @@ describe('annotateFanaticalCards', () => {
     const label = onlyBadge();
     expect(label.tagName).toBe('SPAN');
     expect(label.textContent).toBe('2 games');
-    expect(label.title).toBe('Pack of 2: AMID EVIL, DUSK');
+    expect(label.getAttribute('data-bsl-tip')).toBe('Pack of 2\nAMID EVIL\nDUSK');
     expect(JSON.parse(label.getAttribute('data-bsl-pack')!)).toEqual([
       ['AMID EVIL', 'app/673130'],
       ['DUSK', null],

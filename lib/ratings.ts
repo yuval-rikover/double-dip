@@ -1,8 +1,11 @@
 import { BADGE_ATTR, STEAM_REF_ATTR } from './badge';
 import type { SteamRating } from './steam-ratings';
+import { setTip, TIP_ATTR } from './tooltip';
 
 /** Set on a Steam badge once its rating has been added or ruled out. */
 const RATED_ATTR = 'data-bsl-rated';
+/** Below this many reviews Steam won't call a game "Very Positive": too few to go by. */
+const FEW_REVIEWS = 50;
 
 /** Rating for a Steam id: null for none, undefined while not answered yet. */
 export type RatingLookup = (steamRef: string) => SteamRating | null | undefined;
@@ -52,7 +55,8 @@ export function unratedSteamRefs(doc: Document): string[] {
 
 /**
  * Adds the Steam rating to each Steam badge: "Steam 93% ↗", tinted by
- * Steam's score, with the label and review count in the tooltip. Badges on
+ * Steam's score and dimmed when there are few reviews, with the label and
+ * review count in the tooltip. Badges on
  * tiles matching `tileSelector` that already show the rating are skipped,
  * without asking Steam. Returns how many badges got a rating.
  */
@@ -75,11 +79,15 @@ export function markRatedBadges(doc: Document, lookup: RatingLookup, tileSelecto
 
 function addRating(doc: Document, badge: HTMLElement, rating: SteamRating): void {
   const percent = doc.createElement('span');
-  percent.className = `bsl-rating bsl-rating--${tone(rating.score)}`;
+  const few = rating.count < FEW_REVIEWS;
+  percent.className = `bsl-rating bsl-rating--${tone(rating.score)}${few ? ' bsl-rating--few' : ''}`;
   percent.textContent = `${rating.percent}%`;
   badge.textContent = 'Steam ';
   badge.append(percent, ' ↗');
-  badge.title += ` · ${rating.label}: ${rating.percent}% of ${rating.count.toLocaleString('en-US')} reviews`;
+  const reviews = `${rating.label} · ${rating.percent}% of ${rating.count.toLocaleString('en-US')} ${rating.count === 1 ? 'review' : 'reviews'}`;
+  // Under the game's name, the first line.
+  const [name = '', ...rest] = (badge.getAttribute(TIP_ATTR) ?? '').split('\n');
+  setTip(badge, [name, few ? `${reviews}, too few to go by` : reviews, ...rest].join('\n'));
 }
 
 /** Steam's own grouping: 6–9 positive, 5 mixed, 1–4 negative. */

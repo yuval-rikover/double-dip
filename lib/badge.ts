@@ -1,4 +1,5 @@
 import { formatSteamRef, steamSearchUrl, steamStoreUrl, type SteamRef } from './steam';
+import { setTip } from './tooltip';
 
 /** Marks an element this extension added, so re-scans don't add it twice. */
 export const BADGE_ATTR = 'data-bsl-badge';
@@ -33,14 +34,14 @@ export function createSteamBadge(
   link.target = '_blank';
   link.rel = 'noopener noreferrer';
   link.textContent = game.steam ? 'Steam ↗' : 'Search Steam ↗';
-  link.title = game.steam ? `Open ${game.name} on Steam` : `No Steam ID listed — search Steam for ${game.name}`;
+  setTip(link, `${game.name}\n${game.steam ? 'Open on Steam' : 'No Steam ID listed: searches Steam for the title'}`);
   guardBadgeClicks(doc);
   return link;
 }
 
 /**
  * A "3 games" label for a pack: it has no single Steam page, so this is not a
- * link. Hovering lists the games; the site's own details view lists them too,
+ * link. Its tooltip lists the games; the site's own details view lists them too,
  * where each gets its own Steam badge.
  */
 export function createPackBadge(doc: Document, games: PackGame[]): HTMLElement {
@@ -52,7 +53,7 @@ export function createPackBadge(doc: Document, games: PackGame[]): HTMLElement {
   );
   label.classList.add('bsl-badge', 'bsl-badge--pack');
   label.textContent = `${games.length} games`;
-  label.title = `Pack of ${games.length}: ${games.map((game) => game.name).join(', ')}`;
+  setTip(label, [`Pack of ${games.length}`, ...games.map((game) => game.name)].join('\n'));
   return label;
 }
 
