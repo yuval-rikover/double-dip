@@ -7,6 +7,7 @@ import type { SteamLookup } from '../lib/title-site';
 const games: BundleGame[] = [
   { name: 'Haste', steam: { type: 'app', id: 1796470 } },
   { name: 'Critter Café', steam: null },
+  { name: 'DOOM + DOOM II', steam: null, findOnSteam: true },
   { name: 'AMID EVIL & DUSK Double Pack', steam: null, includes: ['AMID EVIL', 'DUSK'] },
 ];
 const packLookup: SteamLookup = (title) =>
@@ -46,6 +47,19 @@ describe('annotateFanaticalCards', () => {
     document.body.innerHTML = card('bundle-game-card', 'h3', 'Critter Café');
     annotateFanaticalCards(document, games);
     expect(onlyBadge().href).toBe('https://store.steampowered.com/search/?term=Critter%20Caf%C3%A9');
+    expect(onlyBadge().classList).toContain('bsl-badge--search');
+  });
+
+  it('links a game without an id once its title is found on Steam', () => {
+    document.body.innerHTML = card('PickAndMixCard', 'h2', 'DOOM + DOOM II');
+    expect(annotateFanaticalCards(document, games)).toBe(0);
+    expect(annotateFanaticalCards(document, games, () => ({ type: 'app', id: 2280 }))).toBe(1);
+    expect(onlyBadge().href).toBe('https://store.steampowered.com/app/2280/');
+  });
+
+  it('searches Steam for it when the title is not found', () => {
+    document.body.innerHTML = card('PickAndMixCard', 'h2', 'DOOM + DOOM II');
+    annotateFanaticalCards(document, games, () => null);
     expect(onlyBadge().classList).toContain('bsl-badge--search');
   });
 

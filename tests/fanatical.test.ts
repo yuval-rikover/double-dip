@@ -40,15 +40,20 @@ describe('extractBundleGames', () => {
     expect(games).toContainEqual({ name: 'Haste', steam: { type: 'app', id: 1796470 } });
   });
 
-  it('keeps a game without a Steam id, with steam null', () => {
-    expect(extractBundleGames(productsGroup)).toContainEqual({ name: 'Critter Café', steam: null });
+  it('marks a game without a Steam id to be found on Steam by title', () => {
+    expect(extractBundleGames(productsGroup)).toContainEqual({ name: 'Critter Café', steam: null, findOnSteam: true });
+  });
+
+  it('does not look up keys for other stores', () => {
+    const data = { products: [{ name: 'Some GOG Game', steam: { id: null }, drm: { steam: false, gog: true } }] };
+    expect(extractBundleGames(data)).toEqual([{ name: 'Some GOG Game', steam: null }]);
   });
 
   it('reads build-your-own products, including a sub-bundle with no id', () => {
     const games = extractBundleGames(pickAndMix);
     expect(games).toHaveLength(18);
     expect(games).toContainEqual({ name: 'Dreamscaper', steam: { type: 'app', id: 1040420 } });
-    expect(games).toContainEqual({ name: 'Police Stories - Complete Edition', steam: null });
+    expect(games).toContainEqual({ name: 'Police Stories - Complete Edition', steam: null, findOnSteam: true });
   });
 
   it("keeps a pack's game titles", () => {

@@ -16,7 +16,7 @@ const PACK_LIST_ITEM_SELECTOR = '.info-container li';
 /**
  * Adds a badge to every game card that doesn't have one yet: a Steam link,
  * or for a pack a "3 games" label once `lookup` has answered for every game
- * in it. Cards whose name isn't in the bundle data (other sections of the
+ * in it. A game to find on Steam waits for `lookup` to answer for its title. Cards whose name isn't in the bundle data (other sections of the
  * page) are left alone. Returns how many badges were added.
  */
 export function annotateFanaticalCards(doc: Document, games: BundleGame[], lookup: SteamLookup = () => undefined): number {
@@ -35,6 +35,10 @@ export function annotateFanaticalCards(doc: Document, games: BundleGame[], looku
         doc,
         game.includes.map((name, i) => ({ name, steam: refs[i] ?? null })),
       );
+    } else if (game.findOnSteam) {
+      const steam = lookup(game.name);
+      if (steam === undefined) continue;
+      badge = createSteamBadge(doc, { name: game.name, steam });
     } else {
       badge = createSteamBadge(doc, game);
     }

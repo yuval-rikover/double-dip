@@ -93,9 +93,10 @@ interface SteamSearchItem {
 async function searchSteam(title: string, fetchFn: typeof fetch): Promise<SteamRef | null> {
   // Fanatical names DLC "Redout - Mars Pack DLC"; Steam's name has no such
   // suffix. Steam's search also finds nothing for a term with " - " in it
-  // ("Redout - Mars Pack"), though it finds "Redout Mars Pack".
+  // ("Redout - Mars Pack"), though it finds "Redout Mars Pack". Same for " + "
+  // ("DOOM + DOOM II").
   const withoutSuffix = title.replace(/\s+DLC$/i, '');
-  const term = withoutSuffix.replace(/\s+-\s+/g, ' ');
+  const term = withoutSuffix.replace(/\s+[-+]\s+/g, ' ');
   const url = `https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(term)}&l=english&cc=US`;
   const response = await fetchFn(url);
   if (!response.ok) throw new Error(`Steam search returned ${response.status}`);

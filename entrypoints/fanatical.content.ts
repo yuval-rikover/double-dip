@@ -11,7 +11,8 @@ export default defineContentScript({
     const gamesByApiPath = new Map<string, Promise<BundleGame[]>>();
     const markOwned = createOwnershipMarker();
     const markRatings = createRatingMarker(FANATICAL_TILE_SELECTOR);
-    // Packs carry only their games' titles: those are looked up on Steam.
+    // Packs carry only their games' titles, and some games no Steam id: those
+    // titles are looked up on Steam.
     const resolved = new Map<string, SteamRef | null>();
     const requested = new Set<string>();
     const lookup = (title: string) => resolved.get(title);
@@ -35,8 +36,8 @@ export default defineContentScript({
       return games;
     };
 
-    /** Looks up one pack's games in a single request: its badge waits for all of them. */
-    const resolvePack = async (titles: string[]) => {
+    /** Looks up titles in a single request: a pack's badge waits for all its games. */
+    const resolveTitles = async (titles: string[]) => {
       const message: ResolveSteamTitlesMessage = { type: 'resolveSteamTitles', titles };
       const response = (await browser.runtime
         .sendMessage(message)
@@ -69,12 +70,14 @@ export default defineContentScript({
             markRatings();
           };
           annotate();
-          for (const { includes } of games) {
-            const titles = includes?.filter((title) => !requested.has(title));
-            if (!titles?.length) continue;
-            titles.forEach((title) => requested.add(title));
-            void resolvePack(titles);
-          }
+          const request = (titles: string[]) => {
+            const fresh = titles.filter((title) => !requested.has(title));
+            if (!fresh.length) return;
+            fresh.forEach((title) => requested.add(title));
+            void resolveTitles(fresh);
+          };
+          for (const { includes } of games) if (includes) request(includes);
+          request(games.filter((game) => game.findOnSteam).map((game) => game.name));
           let scheduled = false;
           observer = new MutationObserver(() => {
             if (scheduled || ctx.isInvalid) return;

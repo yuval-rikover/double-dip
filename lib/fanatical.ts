@@ -13,6 +13,8 @@ export interface BundleGame {
   steam: SteamRef | null;
   /** For a pack ("Double Pack", "Triple Pack"): the titles of the games in it. */
   includes?: string[];
+  /** A Steam key Fanatical lists without its id ("DOOM + DOOM II"): look its title up on Steam. */
+  findOnSteam?: true;
 }
 
 /** Fanatical's own section pages, which list bundles rather than being one. */
@@ -48,6 +50,8 @@ interface ApiProduct {
   steam?: { type?: string | null; id?: number | null } | null;
   /** Set on packs: the games inside, by title only — no Steam ids. */
   gameNames?: string[] | null;
+  /** Where the key activates. */
+  drm?: { steam?: boolean | null } | null;
 }
 
 interface ApiResponse {
@@ -59,7 +63,8 @@ interface ApiResponse {
  * Lists the bundle's games, de-duplicated by name. A tiered bundle repeats
  * lower-tier games in every higher tier. Mystery placeholders are dropped:
  * there is no real game behind them to link to. A pack has no Steam id of
- * its own; it keeps the titles of the games inside instead.
+ * its own; it keeps the titles of the games inside instead. Any other Steam
+ * key without an id is marked to be looked up by its own title.
  */
 export function extractBundleGames(data: ApiResponse): BundleGame[] {
   const products = [...(data.bundles ?? []).flatMap((tier) => tier.games ?? []), ...(data.products ?? [])];
@@ -68,6 +73,7 @@ export function extractBundleGames(data: ApiResponse): BundleGame[] {
     if (!product.name || product.mystery || byName.has(product.name)) continue;
     const game: BundleGame = { name: product.name, steam: toSteamRef(product.steam) };
     if (!game.steam && product.gameNames?.length) game.includes = product.gameNames;
+    else if (!game.steam && product.drm?.steam !== false) game.findOnSteam = true;
     byName.set(product.name, game);
   }
   return [...byName.values()];

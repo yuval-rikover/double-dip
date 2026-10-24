@@ -100,6 +100,13 @@ describe('resolveSteamTitles', () => {
     });
   });
 
+  it('searches without " + ", which Steam search finds nothing for either', async () => {
+    const { fn } = fakeFetch({ steam: { 'DOOM DOOM II': [{ type: 'app', id: 2280, name: 'DOOM + DOOM II' }] } });
+    expect(await resolveSteamTitles(['DOOM + DOOM II'], { fetch: fn, cache, now: () => NOW })).toEqual({
+      'DOOM + DOOM II': { type: 'app', id: 2280 },
+    });
+  });
+
   it('falls back to ITAD when Steam has no exact match', async () => {
     const { fn } = fakeFetch({
       itadIds: { 'Brütal Legend': 'itad-1' },
