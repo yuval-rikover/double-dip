@@ -7,6 +7,8 @@ export interface OwnedEpic {
   newestOrderId: string | null;
   fullSyncAt: number;
   fetchedAt: number;
+  /** Last sync found no Epic session; this is the library from before. */
+  signedOut?: boolean;
 }
 
 export type EpicLibrary = LibraryResult<OwnedEpic>;
@@ -46,10 +48,12 @@ export async function fetchEpicOrders(
   let token: string | null = null;
   for (let page = 0; page < MAX_PAGES; page++) {
     const url: string = token ? `${ORDERS_URL}&nextPageToken=${encodeURIComponent(token)}` : ORDERS_URL;
-    const response = await fetchFn(url, { credentials: 'include', cache: 'no-store' });
-    if (!response.ok) throw new Error(`Epic order history returned ${response.status}`);
-    // Signed out, Epic redirects to its login page instead of answering.
-    if (response.redirected || !response.headers.get('content-type')?.includes('json')) {
+    // Signed out, Epic redirects to its login page on www.epicgames.com, which
+    // the extension has no access to. Following it only logs a CORS error.
+    const response = await fetchFn(url, { credentials: 'include', cache: 'no-store', redirect: 'manual' });
+    const toLogin = response.type === 'opaqueredirect';
+    if (!toLogin && !response.ok) throw new Error(`Epic order history returned ${response.status}`);
+    if (toLogin || response.redirected || !response.headers.get('content-type')?.includes('json')) {
       if (page === 0) return 'signed-out';
       throw new Error('Epic order history stopped answering mid-sync');
     }
@@ -73,6 +77,11 @@ export async function fetchEpicOrders(
  * Reads the Epic library from the user's Epic session, cached for an hour.
  * Refreshes fetch only orders newer than the cached ones; a full re-read runs
  * weekly so the cache can't drift for long.
+ *
+ * Epic's session usually ends when the browser closes, so signing out keeps
+ * the library (marked `signedOut`) rather than clearing it: markers stay up
+ * while the user signs back in. The next sync is a full re-read, in case it's
+ * a different account.
  */
 export function getEpicLibrary(deps: EpicLibraryDeps, opts: { force?: boolean } = {}): Promise<EpicLibrary> {
   const now = (deps.now ?? Date.now)();
@@ -80,7 +89,7 @@ export function getEpicLibrary(deps: EpicLibraryDeps, opts: { force?: boolean } 
     deps.store,
     now,
     async (cached) => {
-      const base = cached && now - cached.fullSyncAt < FULL_SYNC_EVERY ? cached : null;
+      const base = cached && !cached.signedOut && now - cached.fullSyncAt < FULL_SYNC_EVERY ? cached : null;
       const fetched = await fetchEpicOrders(deps.fetch, base?.newestOrderId);
       if (fetched === 'signed-out') return 'signed-out';
       return {
@@ -90,7 +99,7 @@ export function getEpicLibrary(deps: EpicLibraryDeps, opts: { force?: boolean } 
         fetchedAt: now,
       };
     },
-    opts,
+    { ...opts, keepWhenSignedOut: true },
   );
 }
 
@@ -114,7 +123,8 @@ export function createEpicSource(deps: EpicLibraryDeps) {
   const now = async (): Promise<EpicLibraryNow> => {
     const cached = await deps.store.get();
     const age = cached ? (deps.now ?? Date.now)() - cached.fetchedAt : Infinity;
-    if (age >= MAX_AGE) void refresh().catch(() => undefined);
+    // Signed out, check again each time so signing back in shows up quickly.
+    if (age >= MAX_AGE || cached?.signedOut) void refresh().catch(() => undefined);
     if (cached) return { status: 'ok', ...cached };
     // No cache: report the last sync's outcome (signed out, error) if there was one.
     return last && last.status !== 'ok' ? last : { status: 'syncing' };

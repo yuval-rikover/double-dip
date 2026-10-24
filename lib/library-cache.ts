@@ -16,21 +16,28 @@ const MAX_AGE = 60 * 60 * 1000;
 
 /**
  * Serves a store library from cache for an hour, otherwise fetches it fresh.
- * Signing out clears the cache. On a failed refresh the last cached library is
- * returned, however old, so a store outage doesn't hide every marker.
+ * Signing out clears the cache, unless `keepWhenSignedOut`: then the cached
+ * library is kept, marked `signedOut`, until a sync succeeds again. On a
+ * failed refresh the last cached library is returned, however old, so a store
+ * outage doesn't hide every marker.
  */
-export async function loadCachedLibrary<T extends { fetchedAt: number }>(
+export async function loadCachedLibrary<T extends { fetchedAt: number; signedOut?: boolean }>(
   store: LibraryStore<T>,
   now: number,
   /** Gets the cached library, if any, to refresh incrementally from. */
   fetchFresh: (cached: T | undefined) => Promise<T | 'signed-out'>,
-  opts: { force?: boolean } = {},
+  opts: { force?: boolean; keepWhenSignedOut?: boolean } = {},
 ): Promise<LibraryResult<T>> {
   const cached = await store.get();
-  if (!opts.force && cached && now - cached.fetchedAt < MAX_AGE) return { status: 'ok', ...cached };
+  if (!opts.force && cached && !cached.signedOut && now - cached.fetchedAt < MAX_AGE) return { status: 'ok', ...cached };
   try {
     const fresh = await fetchFresh(cached);
     if (fresh === 'signed-out') {
+      if (opts.keepWhenSignedOut && cached) {
+        const kept: T = { ...cached, signedOut: true };
+        await store.set(kept);
+        return { status: 'ok', ...kept };
+      }
       await store.clear();
       return { status: 'signed-out' };
     }

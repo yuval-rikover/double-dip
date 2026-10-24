@@ -10,6 +10,11 @@ describe('summarizeLibrary', () => {
     expect(summarizeLibrary(library, (l) => l.apps.length)).toEqual({ status: 'ok', count: 3, fetchedAt: NOW });
   });
 
+  it('keeps the signed-out mark of a kept library', () => {
+    const library = { status: 'ok' as const, offers: ['a'], fetchedAt: NOW, signedOut: true };
+    expect(summarizeLibrary(library, (l) => l.offers.length)).toEqual({ status: 'ok', count: 1, fetchedAt: NOW, signedOut: true });
+  });
+
   it('passes signed-out and error through', () => {
     expect(summarizeLibrary({ status: 'signed-out' }, () => 0)).toEqual({ status: 'signed-out' });
     expect(summarizeLibrary({ status: 'error', message: 'x' }, () => 0)).toEqual({ status: 'error', message: 'x' });
@@ -33,6 +38,9 @@ describe('describeLibrary', () => {
   it('describes each status', () => {
     expect(describeLibrary({ status: 'ok', count: 2887, fetchedAt: NOW - 5 * MIN }, NOW)).toBe('2,887 items · updated 5 min ago');
     expect(describeLibrary({ status: 'signed-out' }, NOW)).toBe('Signed out in this browser');
+    expect(describeLibrary({ status: 'ok', count: 1234, fetchedAt: NOW - 180 * MIN, signedOut: true }, NOW)).toBe(
+      'Signed out · showing 1,234 items from 3 h ago',
+    );
     expect(describeLibrary({ status: 'error', message: 'GOG games returned 503' }, NOW)).toBe(
       "Couldn't load: GOG games returned 503",
     );

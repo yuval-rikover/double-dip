@@ -20,8 +20,9 @@ Works on:
 ## How it works
 
 - **No accounts or keys.** Ownership is read with the store sign-ins you
-  already have in this browser. Signed out of a store? It's skipped. The
-  toolbar popup shows each store's status and refreshes your libraries.
+  already have in this browser. Signed out of a store? It's skipped, except
+  Epic, whose sign-in ends with the browser: its last library stays in use.
+  The toolbar popup shows each store's status and refreshes your libraries.
 - **Finding the Steam game.** Fanatical and Humble Choice pages carry Steam
   IDs. Humble Bundle and Green Man Gaming list only titles, which are matched
   exactly on Steam's store search, with [IsThereAnyDeal](https://isthereanydeal.com/)

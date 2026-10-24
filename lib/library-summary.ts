@@ -3,19 +3,20 @@ import type { Store } from './ownership';
 
 /** A library as the popup shows it: a count instead of the id lists. */
 export type LibrarySummary =
-  | { status: 'ok'; count: number; fetchedAt: number }
+  | { status: 'ok'; count: number; fetchedAt: number; signedOut?: boolean }
   | { status: 'signed-out' }
   | { status: 'syncing' }
   | { status: 'error'; message: string };
 
 export type LibrarySummaries = Record<Store, LibrarySummary>;
 
-export function summarizeLibrary<T extends { fetchedAt: number }>(
+export function summarizeLibrary<T extends { fetchedAt: number; signedOut?: boolean }>(
   library: LibraryResult<T> | { status: 'syncing' },
   count: (library: T) => number,
 ): LibrarySummary {
   if (library.status !== 'ok') return library;
-  return { status: 'ok', count: count(library), fetchedAt: library.fetchedAt };
+  const summary: LibrarySummary = { status: 'ok', count: count(library), fetchedAt: library.fetchedAt };
+  return library.signedOut ? { ...summary, signedOut: true } : summary;
 }
 
 /** "just now", "5 min ago", "3 h ago", "2 days ago". */
@@ -33,6 +34,9 @@ export function formatAge(fetchedAt: number, now: number): string {
 export function describeLibrary(summary: LibrarySummary, now: number): string {
   switch (summary.status) {
     case 'ok':
+      if (summary.signedOut) {
+        return `Signed out · showing ${summary.count.toLocaleString('en-US')} items from ${formatAge(summary.fetchedAt, now)}`;
+      }
       return `${summary.count.toLocaleString('en-US')} items · updated ${formatAge(summary.fetchedAt, now)}`;
     case 'signed-out':
       return 'Signed out in this browser';

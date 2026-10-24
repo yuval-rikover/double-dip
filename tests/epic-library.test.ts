@@ -63,6 +63,17 @@ describe('fetchEpicOrders', () => {
   it('reads the login redirect as signed out', async () => {
     expect(await fetchEpicOrders(signedOutFetch)).toBe('signed-out');
   });
+
+  it('reads an unfollowed login redirect as signed out', async () => {
+    const calls: RequestInit[] = [];
+    const fetchFn = (async (_url: RequestInfo | URL, init?: RequestInit) => {
+      calls.push(init!);
+      // What fetch returns for a redirect with `redirect: 'manual'`.
+      return Object.defineProperty(new Response(null), 'type', { value: 'opaqueredirect' });
+    }) as typeof fetch;
+    expect(await fetchEpicOrders(fetchFn)).toBe('signed-out');
+    expect(calls[0]!.redirect).toBe('manual');
+  });
 });
 
 describe('getEpicLibrary', () => {
@@ -87,6 +98,25 @@ describe('getEpicLibrary', () => {
       fullSyncAt: NOW - DAY,
     });
     expect(calls).toHaveLength(1);
+  });
+
+  it('keeps the library when signed out, and re-reads it all on signing back in', async () => {
+    const store = memoryStore({ offers: ['a', 'b'], newestOrderId: 'o2', fullSyncAt: NOW - DAY, fetchedAt: NOW - 2 * HOUR });
+    expect(await getEpicLibrary({ fetch: signedOutFetch, store, now: () => NOW })).toEqual({
+      status: 'ok',
+      offers: ['a', 'b'],
+      newestOrderId: 'o2',
+      fullSyncAt: NOW - DAY,
+      fetchedAt: NOW - 2 * HOUR,
+      signedOut: true,
+    });
+    expect(store.value?.signedOut).toBe(true);
+
+    // Maybe another account: a full read replaces the old offers.
+    const { fn } = historyFetch([order('o9', ['z'])]);
+    const library = await getEpicLibrary({ fetch: fn, store, now: () => NOW });
+    expect(library).toMatchObject({ status: 'ok', offers: ['z'], newestOrderId: 'o9', fullSyncAt: NOW });
+    expect(library).not.toHaveProperty('signedOut');
   });
 
   it('re-reads everything once a week', async () => {
@@ -114,6 +144,16 @@ describe('createEpicSource', () => {
     await epic.refresh();
     expect(calls).toHaveLength(1); // the background refresh, shared
     expect(store.value?.offers).toEqual(['a', 'b']);
+  });
+
+  it('checks again on every call while signed out', async () => {
+    const store = memoryStore({ offers: ['a'], newestOrderId: 'o1', fullSyncAt: NOW, fetchedAt: NOW, signedOut: true });
+    const { fn, calls } = historyFetch([order('o1', ['a'])]);
+    const epic = createEpicSource({ fetch: fn, store, now: () => NOW });
+    expect(await epic.now()).toMatchObject({ status: 'ok', offers: ['a'], signedOut: true });
+    await epic.refresh();
+    expect(calls).toHaveLength(1);
+    expect(store.value?.signedOut).toBeUndefined();
   });
 
   it('reports signed out after a sync finds no session', async () => {

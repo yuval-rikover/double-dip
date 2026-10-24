@@ -44,7 +44,8 @@ function render(summaries: LibrarySummaries | undefined): void {
 
 function storeRow(store: Store, summary: LibrarySummary): HTMLLIElement {
   const row = document.createElement('li');
-  row.className = `store store--${summary.status}`;
+  const signedOut = summary.status === 'signed-out' || (summary.status === 'ok' && summary.signedOut);
+  row.className = `store store--${signedOut ? 'signed-out' : summary.status}`;
   const name = document.createElement('span');
   name.className = 'store__name';
   name.textContent = STORE_NAMES[store];
@@ -52,7 +53,7 @@ function storeRow(store: Store, summary: LibrarySummary): HTMLLIElement {
   detail.className = 'store__detail';
   detail.textContent = describeLibrary(summary, Date.now());
   row.append(name, detail);
-  if (summary.status === 'signed-out') {
+  if (signedOut) {
     const link = document.createElement('a');
     link.href = SIGN_IN_URLS[store];
     link.target = '_blank';
