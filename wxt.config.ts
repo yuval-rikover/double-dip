@@ -11,8 +11,11 @@ export default defineConfig({
   zip: { excludeSources: ['store-assets/**'] },
   manifest: ({ browser }) => ({
     // The store title, and searchable there; short_name is used where space
-    // is tight (extensions menu, toolbar tooltip).
-    name: 'Double Dip: Already-Owned Check for Game Bundles',
+    // is tight (extensions menu, toolbar tooltip). Firefox allows 45 characters.
+    name:
+      browser === 'firefox'
+        ? 'Double Dip: Already-Owned Games in Bundles'
+        : 'Double Dip: Already-Owned Check for Game Bundles',
     short_name: 'Double Dip',
     description:
       'Steam links, ratings and "owned" markers (Steam, GOG, Epic) on Humble Bundle, Humble Choice, Fanatical and Green Man Gaming bundles.',
