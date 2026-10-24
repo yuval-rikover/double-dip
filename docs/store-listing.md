@@ -29,8 +29,8 @@ On every bundle page, each game gets:
   a Steam link for each game in the pack's details.
 
 How it works:
-• Uses the sign-ins you already have in this browser — no extra accounts, no
-  passwords, no API keys.
+• Owned markers need you to be signed in to each store in this browser. It uses
+  the sign-ins you already have — no extra accounts, no passwords, no API keys.
 • Games are matched by store ID wherever possible (via IsThereAnyDeal), so
   different editions and spellings don't trip it up.
 • Signed out of a store? It's simply skipped. The toolbar popup shows each
@@ -39,8 +39,8 @@ How it works:
 Privacy: nothing is sent to the developer — no analytics, no ads, no tracking.
 Your library stays in your browser. Full policy: https://github.com/yuval-rikover/double-dip/blob/main/PRIVACY.md
 
-Not affiliated with Valve, Steam, GOG, Epic Games, Humble Bundle, Fanatical,
-Green Man Gaming or IsThereAnyDeal.
+An independent project, not affiliated with or endorsed by any of the stores or
+bundle sites mentioned above.
 
 ## Category
 
@@ -98,9 +98,9 @@ third-party game art). All are 24-bit PNG, no alpha.
 
 | File | Size | Caption |
 |---|---|---|
-| `1-humble-steam-gog.png` | 1280×800 | Every game gets a Steam link, and games you already own are marked with the stores you own them on. |
-| `2-fanatical-epic-search.png` | 1280×800 | Works on Fanatical too. No Steam ID listed? You get a Steam search link instead. |
-| `3-humble-steam-epic.png` | 1280×800 | Steam, GOG and Epic Games Store libraries, matched by store ID. |
+| `1-humble-ratings-owned.png` | 1280×800 | Every game gets a Steam link with its rating, and games you already own are marked with the stores you own them on. |
+| `2-fanatical-ratings-packs.png` | 1280×800 | Works on Fanatical too, including multi-game packs: see how many of the games you already own. |
+| `3-humble-choice.png` | 1280×800 | Humble Choice months as well, next to Humble's own "Claimed" ribbon. |
 | `4-popup.png` | 1280×800 | The popup shows each library's status and refreshes after a purchase. |
 | `promo-tile-440x280.png` | 440×280 | Chrome small promo tile. |
 
