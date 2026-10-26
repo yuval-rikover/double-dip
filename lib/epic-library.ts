@@ -121,14 +121,29 @@ export function createEpicSource(deps: EpicLibraryDeps) {
   };
 
   const now = async (): Promise<EpicLibraryNow> => {
+    // Before starting one below: a sync already running means a first read
+    // (or a re-read after signing back in) is under way.
+    const wasSyncing = running !== null;
     const cached = await deps.store.get();
     const age = cached ? (deps.now ?? Date.now)() - cached.fetchedAt : Infinity;
     // Signed out, check again each time so signing back in shows up quickly.
     if (age >= MAX_AGE || cached?.signedOut) void refresh().catch(() => undefined);
     if (cached) return { status: 'ok', ...cached };
     // No cache: report the last sync's outcome (signed out, error) if there was one.
-    return last && last.status !== 'ok' ? last : { status: 'syncing' };
+    return !wasSyncing && last && last.status !== 'ok' ? last : { status: 'syncing' };
   };
 
-  return { now, refresh };
+  /**
+   * For the popup: like `now()`, but a kept library reads "syncing" while a
+   * re-read started earlier is still running: the user signed back in. A
+   * check `now()` itself starts doesn't count; signed out, every call starts
+   * one.
+   */
+  const status = async (): Promise<EpicLibraryNow> => {
+    const wasSyncing = running !== null;
+    const library = await now();
+    return wasSyncing && library.status === 'ok' && library.signedOut ? { status: 'syncing' } : library;
+  };
+
+  return { now, refresh, status };
 }

@@ -19,6 +19,24 @@ export function summarizeLibrary<T extends { fetchedAt: number; signedOut?: bool
   return library.signedOut ? { ...summary, signedOut: true } : summary;
 }
 
+/**
+ * Whether the popup should check this library again while open: a first sync
+ * still running, or a store the user may be signing in to right now.
+ */
+export function awaitsChange(summary: LibrarySummary): boolean {
+  return summary.status === 'syncing' || summary.status === 'signed-out' || (summary.status === 'ok' && !!summary.signedOut);
+}
+
+/**
+ * Whether open pages would mark games differently with `after` than with
+ * `before`: a library appeared, went, or changed size. A library kept while
+ * signed out still marks games, so it counts as loaded.
+ */
+export function markersChanged(before: LibrarySummaries, after: LibrarySummaries): boolean {
+  const marks = (summary: LibrarySummary) => (summary.status === 'ok' ? summary.count : -1);
+  return (Object.keys(after) as Store[]).some((store) => marks(before[store]) !== marks(after[store]));
+}
+
 /** "just now", "5 min ago", "3 h ago", "2 days ago". */
 export function formatAge(fetchedAt: number, now: number): string {
   const minutes = Math.floor((now - fetchedAt) / 60_000);
@@ -41,7 +59,7 @@ export function describeLibrary(summary: LibrarySummary, now: number): string {
     case 'signed-out':
       return 'Signed out in this browser';
     case 'syncing':
-      return 'Reading purchase history… (first time takes ~30 s)';
+      return 'Reading purchase history… (takes up to ~30 s)';
     case 'error':
       return `Couldn't load: ${summary.message}`;
   }

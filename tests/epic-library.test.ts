@@ -156,6 +156,58 @@ describe('createEpicSource', () => {
     expect(store.value?.signedOut).toBeUndefined();
   });
 
+  it('has the popup read a kept library as signed out while signed out, on every check', async () => {
+    const store = memoryStore({ offers: ['a'], newestOrderId: 'o1', fullSyncAt: NOW, fetchedAt: NOW, signedOut: true });
+    const epic = createEpicSource({ fetch: signedOutFetch, store, now: () => NOW });
+    for (let i = 0; i < 3; i++) {
+      expect(await epic.status()).toMatchObject({ status: 'ok', signedOut: true });
+      await epic.refresh(); // the re-check status() started
+    }
+  });
+
+  it('has the popup read "syncing" while a re-read runs after signing back in', async () => {
+    let release = () => {};
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    const { fn: history } = historyFetch([order('o2', ['b'])]);
+    const fn = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      await gate;
+      return history(input, init);
+    }) as typeof fetch;
+    const store = memoryStore({ offers: ['a'], newestOrderId: 'o1', fullSyncAt: NOW, fetchedAt: NOW, signedOut: true });
+    const epic = createEpicSource({ fetch: fn, store, now: () => NOW });
+    // The first check starts the re-read, so it can't know yet.
+    expect(await epic.status()).toMatchObject({ status: 'ok', signedOut: true });
+    expect(await epic.status()).toEqual({ status: 'syncing' });
+    // Pages keep the kept library meanwhile.
+    expect(await epic.now()).toMatchObject({ status: 'ok', offers: ['a'] });
+    release();
+    await epic.refresh();
+    expect(await epic.status()).toMatchObject({ status: 'ok', offers: ['b'] });
+  });
+
+  it('answers "syncing" without a cache while a sync runs, not the old signed-out result', async () => {
+    let release = () => {};
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    let signedIn = false;
+    const { fn: history } = historyFetch([order('o1', ['a'])]);
+    const fn = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (!signedIn) return signedOutFetch(input, init);
+      await gate;
+      return history(input, init);
+    }) as typeof fetch;
+    const epic = createEpicSource({ fetch: fn, store: memoryStore(), now: () => NOW });
+    await epic.refresh();
+    expect(await epic.now()).toEqual({ status: 'signed-out' });
+    await epic.refresh(); // the re-check now() started
+
+    signedIn = true;
+    const syncing = epic.refresh(true);
+    expect(await epic.now()).toEqual({ status: 'syncing' });
+    release();
+    await syncing;
+    expect(await epic.now()).toMatchObject({ status: 'ok', offers: ['a'] });
+  });
+
   it('reports signed out after a sync finds no session', async () => {
     const epic = createEpicSource({ fetch: signedOutFetch, store: memoryStore(), now: () => NOW });
     await epic.refresh();

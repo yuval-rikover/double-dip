@@ -50,7 +50,7 @@ async function libraryStatus(refresh: boolean): Promise<LibrarySummaries> {
   const [steam, gog, epicLibrary] = await Promise.all([
     steamLibrary(refresh),
     gogLibrary(refresh),
-    refresh ? epic.refresh(true) : epic.now(),
+    refresh ? epic.refresh(true) : epic.status(),
   ]);
   return {
     steam: summarizeLibrary(steam, (library) => library.apps.length),

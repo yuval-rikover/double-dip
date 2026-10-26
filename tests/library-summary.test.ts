@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeLibrary, formatAge, summarizeLibrary } from '../lib/library-summary';
+import { awaitsChange, describeLibrary, formatAge, markersChanged, summarizeLibrary, type LibrarySummaries } from '../lib/library-summary';
 
 const NOW = 1_800_000_000_000;
 const MIN = 60_000;
@@ -44,5 +44,37 @@ describe('describeLibrary', () => {
     expect(describeLibrary({ status: 'error', message: 'GOG games returned 503' }, NOW)).toBe(
       "Couldn't load: GOG games returned 503",
     );
+  });
+});
+
+describe('awaitsChange', () => {
+  it('re-checks syncing and signed-out stores, not loaded or failed ones', () => {
+    expect(awaitsChange({ status: 'syncing' })).toBe(true);
+    expect(awaitsChange({ status: 'signed-out' })).toBe(true);
+    expect(awaitsChange({ status: 'ok', count: 1, fetchedAt: NOW, signedOut: true })).toBe(true);
+    expect(awaitsChange({ status: 'ok', count: 1, fetchedAt: NOW })).toBe(false);
+    expect(awaitsChange({ status: 'error', message: 'x' })).toBe(false);
+  });
+});
+
+describe('markersChanged', () => {
+  const base: LibrarySummaries = {
+    steam: { status: 'ok', count: 2887, fetchedAt: NOW - 5 * MIN },
+    gog: { status: 'signed-out' },
+    epic: { status: 'ok', count: 664, fetchedAt: NOW - 5 * MIN },
+  };
+
+  it('ignores a refresh that only updated the time', () => {
+    expect(markersChanged(base, { ...base, steam: { status: 'ok', count: 2887, fetchedAt: NOW } })).toBe(false);
+  });
+
+  it('ignores Epic going signed out while its library is kept', () => {
+    expect(markersChanged(base, { ...base, epic: { status: 'ok', count: 664, fetchedAt: NOW, signedOut: true } })).toBe(false);
+  });
+
+  it('notices a new purchase, a sign-in and a library going away', () => {
+    expect(markersChanged(base, { ...base, steam: { status: 'ok', count: 2888, fetchedAt: NOW } })).toBe(true);
+    expect(markersChanged(base, { ...base, gog: { status: 'ok', count: 610, fetchedAt: NOW } })).toBe(true);
+    expect(markersChanged(base, { ...base, epic: { status: 'syncing' } })).toBe(true);
   });
 });

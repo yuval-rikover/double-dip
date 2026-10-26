@@ -1,4 +1,4 @@
-import { describeLibrary, type LibrarySummaries, type LibrarySummary } from '../../lib/library-summary';
+import { awaitsChange, describeLibrary, markersChanged, type LibrarySummaries, type LibrarySummary } from '../../lib/library-summary';
 import type { GetLibraryStatusMessage, GetLibraryStatusResponse } from '../../lib/messages';
 import { STORE_NAMES, type Store } from '../../lib/ownership';
 
@@ -22,14 +22,22 @@ function requiredOrigins(): string[] {
 }
 
 let pollTimer: ReturnType<typeof setTimeout> | undefined;
+/** The libraries as the popup first found them: what open pages are using. */
+let opened: LibrarySummaries | undefined;
 
 async function loadStatus(refresh: boolean): Promise<void> {
   const message: GetLibraryStatusMessage = { type: 'getLibraryStatus', refresh };
   const summaries = (await browser.runtime.sendMessage(message)) as GetLibraryStatusResponse | undefined;
   render(summaries);
-  // A first Epic sync runs in the background; check back until it lands.
+  if (summaries) {
+    opened ??= summaries;
+    // Pages mark games once; they only need a reload when a library changed.
+    hint.hidden = !markersChanged(opened, summaries);
+  }
+  // Check back while a first Epic sync runs, or while a store reads as
+  // signed out: the user may be signing in from the popup's link right now.
   clearTimeout(pollTimer);
-  if (summaries && Object.values(summaries).some((summary) => summary.status === 'syncing')) {
+  if (summaries && Object.values(summaries).some(awaitsChange)) {
     pollTimer = setTimeout(() => void loadStatus(false), 3000);
   }
 }
@@ -69,7 +77,6 @@ refreshButton.addEventListener('click', async () => {
   refreshButton.textContent = 'Refreshing…';
   try {
     await loadStatus(true);
-    hint.hidden = false;
   } finally {
     refreshButton.disabled = false;
     refreshButton.textContent = 'Refresh libraries';
