@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createPackBadge, createSteamBadge, type PackGame } from '../lib/badge';
-import { markOwnedBadges, uncheckedSteamRefs, type OwnershipLookup } from '../lib/owned';
+import { clearOwnedMarkers, markOwnedBadges, uncheckedSteamRefs, type OwnershipLookup } from '../lib/owned';
 import type { Store } from '../lib/ownership';
 
 const answers: Record<string, Store[]> = {
@@ -65,6 +65,16 @@ describe('markOwnedBadges', () => {
     markOwnedBadges(document, lookup);
     expect(markOwnedBadges(document, lookup)).toBe(0);
     expect(markers()).toHaveLength(1);
+  });
+
+  it('starts over after clearing, with new answers', () => {
+    tile({ name: 'Brutal Legend', steam: { type: 'app', id: 225260 } });
+    tile({ name: 'Kiln', steam: { type: 'app', id: 1165990 } });
+    markOwnedBadges(document, lookup);
+    clearOwnedMarkers(document);
+    expect(markers()).toHaveLength(0);
+    expect(markOwnedBadges(document, (ref) => (ref === 'app/1165990' ? ['epic'] : []))).toBe(1);
+    expect(markers().map((marker) => marker.getAttribute('data-bsl-owned'))).toEqual(['epic']);
   });
 
   it('lists each unchecked id once', () => {

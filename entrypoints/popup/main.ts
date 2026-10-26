@@ -1,4 +1,4 @@
-import { awaitsChange, describeLibrary, markersChanged, type LibrarySummaries, type LibrarySummary } from '../../lib/library-summary';
+import { awaitsChange, describeLibrary, type LibrarySummaries, type LibrarySummary } from '../../lib/library-summary';
 import type { GetLibraryStatusMessage, GetLibraryStatusResponse } from '../../lib/messages';
 import { STORE_NAMES, type Store } from '../../lib/ownership';
 
@@ -10,7 +10,6 @@ const SIGN_IN_URLS: Record<Store, string> = {
 
 const storesList = document.querySelector<HTMLUListElement>('#stores')!;
 const refreshButton = document.querySelector<HTMLButtonElement>('#refresh')!;
-const hint = document.querySelector<HTMLParagraphElement>('#hint')!;
 const access = document.querySelector<HTMLElement>('#access')!;
 const grantButton = document.querySelector<HTMLButtonElement>('#grant')!;
 
@@ -22,18 +21,11 @@ function requiredOrigins(): string[] {
 }
 
 let pollTimer: ReturnType<typeof setTimeout> | undefined;
-/** The libraries as the popup first found them: what open pages are using. */
-let opened: LibrarySummaries | undefined;
 
 async function loadStatus(refresh: boolean): Promise<void> {
   const message: GetLibraryStatusMessage = { type: 'getLibraryStatus', refresh };
   const summaries = (await browser.runtime.sendMessage(message)) as GetLibraryStatusResponse | undefined;
   render(summaries);
-  if (summaries) {
-    opened ??= summaries;
-    // Pages mark games once; they only need a reload when a library changed.
-    hint.hidden = !markersChanged(opened, summaries);
-  }
   // Check back while a first Epic sync runs, or while a store reads as
   // signed out: the user may be signing in from the popup's link right now.
   clearTimeout(pollTimer);

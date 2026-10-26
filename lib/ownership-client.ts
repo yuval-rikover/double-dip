@@ -6,7 +6,8 @@ import type {
   GetSteamRatingsResponse,
   WarmLibrariesMessage,
 } from './messages';
-import { markOwnedBadges, uncheckedSteamRefs } from './owned';
+import { LIBRARY_KEYS, ownedIdsChanged } from './library-cache';
+import { clearOwnedMarkers, markOwnedBadges, uncheckedSteamRefs } from './owned';
 import type { Store } from './ownership';
 import { markRatedBadges, unratedSteamRefs } from './ratings';
 import type { SteamRating } from './steam-ratings';
@@ -27,11 +28,13 @@ export function warmLibraries(): void {
 /**
  * Returns a function for content scripts to call after each round of badges:
  * it asks the background which libraries hold the newly badged games and adds
- * "Owned" markers as the answers arrive.
+ * "Owned" markers as the answers arrive. When a library changes (a purchase,
+ * signing in or out of a store), the markers are redone without a reload.
  */
 export function createOwnershipMarker(): () => void {
-  return createBadgeDecorator<Store[]>({
+  const decorator = createBadgeDecorator<Store[]>({
     mark: (lookup) => markOwnedBadges(document, lookup),
+    clear: () => clearOwnedMarkers(document),
     unchecked: () => uncheckedSteamRefs(document),
     ask: async (steamRefs) => {
       const message: GetOwnershipMessage = { type: 'getOwnership', steamRefs };
@@ -40,6 +43,19 @@ export function createOwnershipMarker(): () => void {
     // Unanswered ids (background failure) count as not owned.
     fallback: [],
   });
+  const libraryKeys = new Set<string>(Object.values(LIBRARY_KEYS));
+  try {
+    browser.storage.onChanged.addListener((changes, area) => {
+      if (area !== 'local') return;
+      const changed = Object.entries(changes).some(
+        ([key, change]) => libraryKeys.has(key) && ownedIdsChanged(change.oldValue, change.newValue),
+      );
+      if (changed) decorator.reask();
+    });
+  } catch {
+    // Left behind by an extension reload: the extension can't be reached.
+  }
+  return decorator.decorate;
 }
 
 /**
@@ -55,12 +71,14 @@ export function createRatingMarker(tileSelector: string): () => void {
       return (await browser.runtime.sendMessage(message)) as GetSteamRatingsResponse | undefined;
     },
     fallback: null,
-  });
+  }).decorate;
 }
 
 interface BadgeDecorator<T> {
   /** Decorates the badges `lookup` can answer for. */
   mark(lookup: (steamRef: string) => T | undefined): void;
+  /** Removes the decorations, for `reask`. */
+  clear?(): void;
   /** Steam ids of the badges not decorated yet. */
   unchecked(): string[];
   ask(steamRefs: string[]): Promise<Record<string, T> | undefined>;
@@ -71,9 +89,10 @@ interface BadgeDecorator<T> {
 /**
  * Each Steam id is asked about once, and ids badged in quick succession are
  * batched into one question (each costs the background a network call or a
- * few).
+ * few). `reask` asks again about every id so far and redoes the decorations
+ * once the answers are in, so they don't flicker off while waiting.
  */
-function createBadgeDecorator<T>(decorator: BadgeDecorator<T>): () => void {
+function createBadgeDecorator<T>(decorator: BadgeDecorator<T>): { decorate: () => void; reask: () => void } {
   const answers = new Map<string, T>();
   const requested = new Set<string>();
   let batch: string[] = [];
@@ -93,7 +112,7 @@ function createBadgeDecorator<T>(decorator: BadgeDecorator<T>): () => void {
       .catch((error) => console.warn('[Double Dip]', error));
   };
 
-  return function decorate() {
+  const decorate = () => {
     mark();
     const refs = decorator.unchecked().filter((ref) => !requested.has(ref));
     if (refs.length === 0) return;
@@ -101,4 +120,23 @@ function createBadgeDecorator<T>(decorator: BadgeDecorator<T>): () => void {
     batch.push(...refs);
     timer ??= setTimeout(flush, BATCH_WINDOW_MS);
   };
+
+  let reasking = 0;
+  const reask = () => {
+    const refs = [...answers.keys()];
+    if (refs.length === 0) return;
+    // A later change wins over an earlier one still waiting for answers.
+    const thisRound = ++reasking;
+    decorator
+      .ask(refs)
+      .then((response) => {
+        if (thisRound !== reasking) return;
+        for (const ref of refs) answers.set(ref, response?.[ref] ?? decorator.fallback);
+        decorator.clear?.();
+        mark();
+      })
+      .catch((error) => console.warn('[Double Dip]', error));
+  };
+
+  return { decorate, reask };
 }

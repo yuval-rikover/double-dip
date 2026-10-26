@@ -27,16 +27,6 @@ export function awaitsChange(summary: LibrarySummary): boolean {
   return summary.status === 'syncing' || summary.status === 'signed-out' || (summary.status === 'ok' && !!summary.signedOut);
 }
 
-/**
- * Whether open pages would mark games differently with `after` than with
- * `before`: a library appeared, went, or changed size. A library kept while
- * signed out still marks games, so it counts as loaded.
- */
-export function markersChanged(before: LibrarySummaries, after: LibrarySummaries): boolean {
-  const marks = (summary: LibrarySummary) => (summary.status === 'ok' ? summary.count : -1);
-  return (Object.keys(after) as Store[]).some((store) => marks(before[store]) !== marks(after[store]));
-}
-
 /** "just now", "5 min ago", "3 h ago", "2 days ago". */
 export function formatAge(fetchedAt: number, now: number): string {
   const minutes = Math.floor((now - fetchedAt) / 60_000);

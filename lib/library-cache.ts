@@ -14,6 +14,24 @@ export interface LibraryStore<T> {
 
 const MAX_AGE = 60 * 60 * 1000;
 
+/** `storage.local` keys of the store libraries. */
+export const LIBRARY_KEYS = { steam: 'steam-library', gog: 'gog-library', epic: 'epic-library' } as const;
+
+/** Bookkeeping fields: a change in them alone doesn't change what's owned. */
+const META_FIELDS = new Set(['fetchedAt', 'fullSyncAt', 'newestOrderId', 'signedOut']);
+
+/**
+ * Whether a stored library's owned ids differ between two versions: a
+ * refresh that found nothing new doesn't count, signing out (cleared) does.
+ */
+export function ownedIdsChanged(before: unknown, after: unknown): boolean {
+  const ids = (library: unknown) =>
+    library && typeof library === 'object'
+      ? JSON.stringify(Object.entries(library).filter(([field]) => !META_FIELDS.has(field)))
+      : null;
+  return ids(before) !== ids(after);
+}
+
 /**
  * Serves a store library from cache for an hour, otherwise fetches it fresh.
  * Signing out clears the cache, unless `keepWhenSignedOut`: then the cached

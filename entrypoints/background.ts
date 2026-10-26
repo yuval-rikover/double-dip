@@ -2,7 +2,7 @@ import type { KeyValueCache } from '../lib/cache';
 import { createLimiter, shareInFlight } from '../lib/concurrency';
 import { createEpicSource, type OwnedEpic } from '../lib/epic-library';
 import { getGogLibrary, type OwnedGog } from '../lib/gog-library';
-import type { LibraryStore } from '../lib/library-cache';
+import { LIBRARY_KEYS, type LibraryStore } from '../lib/library-cache';
 import { summarizeLibrary, type LibrarySummaries } from '../lib/library-summary';
 import { isExtensionMessage, type ExtensionMessage } from '../lib/messages';
 import { getOwnership } from '../lib/ownership';
@@ -30,8 +30,8 @@ const fetchFn = (...args: Parameters<typeof fetch>) => fetch(...args);
 const titleCache = keyValueCache<CachedRef>();
 const shopIdCache = keyValueCache<CachedShopIds>();
 const ratingCache = keyValueCache<CachedRating>();
-const steamStore = libraryStore<OwnedSteam>('steam-library');
-const gogStore = libraryStore<OwnedGog>('gog-library');
+const steamStore = libraryStore<OwnedSteam>(LIBRARY_KEYS.steam);
+const gogStore = libraryStore<OwnedGog>(LIBRARY_KEYS.gog);
 
 // Several pages (or a warm-up and the first ownership question) can ask at
 // once; they share one load instead of each fetching the library.
@@ -42,7 +42,7 @@ const steamLibrary = (force = false) =>
 const gogLibrary = (force = false) =>
   force ? getGogLibrary({ fetch: fetchFn, store: gogStore }, { force }) : gogLibraryShared();
 // Epic's history takes many requests to read, so pages never wait for it.
-const epic = createEpicSource({ fetch: fetchFn, store: libraryStore<OwnedEpic>('epic-library') });
+const epic = createEpicSource({ fetch: fetchFn, store: libraryStore<OwnedEpic>(LIBRARY_KEYS.epic) });
 // Shared by every title lookup: Humble pages send one request per title.
 const steamSearchLimit = createLimiter(SEARCH_CONCURRENCY);
 

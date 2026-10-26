@@ -37,6 +37,12 @@ function packGames(pack: Element): PackEntry[] {
   }
 }
 
+/** Removes every owned marker, so the next `markOwnedBadges` starts over. */
+export function clearOwnedMarkers(doc: Document): void {
+  for (const marker of doc.querySelectorAll(`[${OWNED_ATTR}]`)) marker.remove();
+  for (const badge of doc.querySelectorAll(`[${CHECKED_ATTR}]`)) badge.removeAttribute(CHECKED_ATTR);
+}
+
 /**
  * Adds an "Owned" marker beside every Steam badge whose game is in a library:
  * in the tile's other corner, or inline for inline badges. Works on badges
