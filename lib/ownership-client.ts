@@ -7,8 +7,7 @@ import type {
   WarmLibrariesMessage,
 } from './messages';
 import { LIBRARY_KEYS, ownedIdsChanged } from './library-cache';
-import { clearOwnedMarkers, markOwnedBadges, uncheckedSteamRefs } from './owned';
-import type { Store } from './ownership';
+import { clearOwnedMarkers, markOwnedBadges, uncheckedSteamRefs, type GameStores } from './owned';
 import { markRatedBadges, unratedSteamRefs } from './ratings';
 import type { SteamRating } from './steam-ratings';
 
@@ -28,20 +27,25 @@ export function warmLibraries(): void {
 /**
  * Returns a function for content scripts to call after each round of badges:
  * it asks the background which libraries hold the newly badged games and adds
- * "Owned" markers as the answers arrive. When a library changes (a purchase,
- * signing in or out of a store), the markers are redone without a reload.
+ * "Owned" (or wishlisted) markers as the answers arrive. When a library or
+ * wishlist changes (a purchase, signing in or out of a store), the markers
+ * are redone without a reload.
  */
 export function createOwnershipMarker(): () => void {
-  const decorator = createBadgeDecorator<Store[]>({
+  const decorator = createBadgeDecorator<GameStores>({
     mark: (lookup) => markOwnedBadges(document, lookup),
     clear: () => clearOwnedMarkers(document),
     unchecked: () => uncheckedSteamRefs(document),
     ask: async (steamRefs) => {
       const message: GetOwnershipMessage = { type: 'getOwnership', steamRefs };
-      return ((await browser.runtime.sendMessage(message)) as GetOwnershipResponse | undefined)?.owned;
+      const response = (await browser.runtime.sendMessage(message)) as GetOwnershipResponse | undefined;
+      if (!response) return undefined;
+      return Object.fromEntries(
+        Object.entries(response.owned).map(([ref, owned]) => [ref, { owned, wishlisted: response.wishlisted?.[ref] }]),
+      );
     },
     // Unanswered ids (background failure) count as not owned.
-    fallback: [],
+    fallback: { owned: [] },
   });
   const libraryKeys = new Set<string>(Object.values(LIBRARY_KEYS));
   try {

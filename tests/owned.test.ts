@@ -9,7 +9,9 @@ const answers: Record<string, Store[]> = {
   'app/3830': ['steam', 'gog'],
   'app/1165990': [],
 };
-const lookup: OwnershipLookup = (ref) => answers[ref];
+const lookup: OwnershipLookup = (ref) => (answers[ref] ? { owned: answers[ref] } : undefined);
+/** Answers with only these stores owning it. */
+const owns = (stores: Store[]) => ({ owned: stores });
 const markers = () => [...document.querySelectorAll('[data-bsl-owned]')];
 
 function tile(game: Parameters<typeof createSteamBadge>[1], placement?: 'corner' | 'inline') {
@@ -50,7 +52,7 @@ describe('markOwnedBadges', () => {
     tile({ name: 'Later', steam: { type: 'app', id: 42 } });
     expect(markOwnedBadges(document, lookup)).toBe(0);
     expect(uncheckedSteamRefs(document)).toEqual(['app/42']);
-    expect(markOwnedBadges(document, (ref) => (ref === 'app/42' ? ['gog'] : undefined))).toBe(1);
+    expect(markOwnedBadges(document, (ref) => (ref === 'app/42' ? owns(['gog']) : undefined))).toBe(1);
     expect(uncheckedSteamRefs(document)).toEqual([]);
   });
 
@@ -73,8 +75,29 @@ describe('markOwnedBadges', () => {
     markOwnedBadges(document, lookup);
     clearOwnedMarkers(document);
     expect(markers()).toHaveLength(0);
-    expect(markOwnedBadges(document, (ref) => (ref === 'app/1165990' ? ['epic'] : []))).toBe(1);
+    expect(markOwnedBadges(document, (ref) => owns(ref === 'app/1165990' ? ['epic'] : []))).toBe(1);
     expect(markers().map((marker) => marker.getAttribute('data-bsl-owned'))).toEqual(['epic']);
+  });
+
+  it('marks a game owned nowhere but wishlisted with a heart', () => {
+    const el = tile({ name: 'Kiln', steam: { type: 'app', id: 1165990 } });
+    expect(markOwnedBadges(document, () => ({ owned: [], wishlisted: ['steam', 'gog'] }))).toBe(1);
+    const marker = el.querySelector<HTMLElement>('[data-bsl-wish]')!;
+    expect(marker.getAttribute('data-bsl-wish')).toBe('steam gog');
+    expect(marker.classList).toContain('bsl-owned--wish');
+    expect(marker.textContent).toBe('♥ Wishlisted');
+    expect(marker.getAttribute('data-bsl-tip')).toBe('On your Steam and GOG wishlists');
+    expect(markers()).toHaveLength(0);
+  });
+
+  it('shows only the owned marker for an owned game, and clears hearts too', () => {
+    tile({ name: 'Kiln', steam: { type: 'app', id: 1165990 } });
+    markOwnedBadges(document, () => ({ owned: ['epic'], wishlisted: ['steam'] }));
+    expect(document.querySelectorAll('[data-bsl-wish]')).toHaveLength(0);
+    clearOwnedMarkers(document);
+    markOwnedBadges(document, () => ({ owned: [], wishlisted: ['steam'] }));
+    clearOwnedMarkers(document);
+    expect(document.querySelectorAll('[data-bsl-wish], [data-bsl-owned]')).toHaveLength(0);
   });
 
   it('lists each unchecked id once', () => {
@@ -124,6 +147,22 @@ describe('markOwnedBadges on packs', () => {
     expect(marker.classList).not.toContain('bsl-owned--partial');
     expect(marker.querySelector('.bsl-owned__check')?.textContent).toBe('✓');
     expect(marker.getAttribute('data-bsl-tip')).toBe('Own all 2\nBrutal Legend (Steam)\nPsychonauts (Steam, GOG)');
+  });
+
+  it('adds wishlisted games to an owned pack\'s tooltip', () => {
+    const el = pack(trio);
+    markOwnedBadges(document, (ref) => (ref === 'app/1165990' ? { owned: [], wishlisted: ['gog'] } : lookup(ref)));
+    expect(el.querySelector('[data-bsl-owned]')!.getAttribute('data-bsl-tip')).toBe(
+      'Own 2 of 3\nBrutal Legend (Steam)\nPsychonauts (Steam, GOG)\nWishlisted:\nKiln (GOG)',
+    );
+  });
+
+  it('marks a pack with nothing owned but a wishlisted game with a heart', () => {
+    const el = pack(trio);
+    markOwnedBadges(document, (ref) => (ref === 'app/3830' ? { owned: [], wishlisted: ['steam'] } : owns([])));
+    const marker = el.querySelector('[data-bsl-wish]')!;
+    expect(marker.getAttribute('data-bsl-tip')).toBe('1 of 3 on your wishlists\nPsychonauts (Steam)');
+    expect(el.querySelector('[data-bsl-owned]')).toBeNull();
   });
 
   it('counts a game not on Steam as not owned', () => {

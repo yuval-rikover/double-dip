@@ -46,6 +46,27 @@ describe('getGogLibrary', () => {
     expect(calls[0]!.credentials).toBe('include');
   });
 
+  it('reads the wishlist too, and loads without it when GOG fails to answer', async () => {
+    const json = (body: unknown) => new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } });
+    const withWishlist = (async (url: RequestInfo | URL) =>
+      String(url).endsWith('/user/wishlist.json')
+        ? json({ wishlist: { '1207658890': true, '1207659253': false }, checksum: 'x' })
+        : json({ owned: [1] })) as typeof fetch;
+    expect(await getGogLibrary({ fetch: withWishlist, store: memoryStore(), now: () => NOW })).toEqual({
+      status: 'ok',
+      owned: [1],
+      wishlist: [1207658890],
+      fetchedAt: NOW,
+    });
+    const failing = (async (url: RequestInfo | URL) =>
+      String(url).endsWith('/user/wishlist.json') ? new Response('', { status: 500 }) : json({ owned: [1] })) as typeof fetch;
+    expect(await getGogLibrary({ fetch: failing, store: memoryStore(), now: () => NOW })).toEqual({
+      status: 'ok',
+      owned: [1],
+      fetchedAt: NOW,
+    });
+  });
+
   it('reads the login-page redirect as signed out', async () => {
     const fetchFn = (async () =>
       new Response('<!DOCTYPE html><html>Redirecting to /en##openlogin</html>', {
@@ -129,8 +150,20 @@ describe('getOwnership', () => {
     });
     expect(result).toEqual({
       owned: { 'app/225260': ['steam', 'epic'], 'app/3830': ['gog'], 'sub/25920': ['steam'], 'app/5': [] },
+      wishlisted: {},
       status: { steam: 'ok', gog: 'ok', epic: 'ok' },
     });
+  });
+
+  it('reports Steam and GOG wishlists for games owned nowhere', async () => {
+    const result = await getOwnership(['app/225260', 'app/7', 'app/8', 'sub/9'], {
+      steam: async () => ({ status: 'ok' as const, apps: [225260], packages: [], wishlist: [225260, 7, 9], fetchedAt: NOW }),
+      gog: async () => ({ status: 'ok' as const, owned: [], wishlist: [1207658890], fetchedAt: NOW }),
+      epic: async () => ({ status: 'signed-out' as const }),
+      shopIds: async () => ({ 'app/7': { gog: ['1207658890'], epic: [] }, 'app/8': { gog: ['1207658890'], epic: [] } }),
+    });
+    // Owned wins; Steam wishlists hold apps, not packages.
+    expect(result.wishlisted).toEqual({ 'app/7': ['steam', 'gog'], 'app/8': ['gog'] });
   });
 
   it('skips the store id lookup when there is no GOG or Epic library', async () => {

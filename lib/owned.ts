@@ -7,9 +7,16 @@ const STORES = Object.keys(STORE_NAMES) as Store[];
 /** Set on a Steam badge once its ownership has been checked. */
 const CHECKED_ATTR = 'data-bsl-owned-checked';
 const OWNED_ATTR = 'data-bsl-owned';
+const WISH_ATTR = 'data-bsl-wish';
 
-/** Stores owning the game with this Steam id; undefined while not answered yet. */
-export type OwnershipLookup = (steamRef: string) => Store[] | undefined;
+/** Where the user has a game: stores owning it, and for a game owned nowhere, wishlists holding it. */
+export interface GameStores {
+  owned: Store[];
+  wishlisted?: Store[];
+}
+
+/** Undefined while not answered yet. */
+export type OwnershipLookup = (steamRef: string) => GameStores | undefined;
 
 /** Steam ids of the badges not checked yet, including every game in an unchecked pack. */
 export function uncheckedSteamRefs(doc: Document): string[] {
@@ -24,7 +31,7 @@ export function uncheckedSteamRefs(doc: Document): string[] {
 
 type PackEntry = [title: string, steamRef: string | null];
 
-interface OwnedGame {
+interface PackGame {
   title: string;
   stores: Store[];
 }
@@ -37,59 +44,74 @@ function packGames(pack: Element): PackEntry[] {
   }
 }
 
-/** Removes every owned marker, so the next `markOwnedBadges` starts over. */
+/** Removes every owned and wishlist marker, so the next `markOwnedBadges` starts over. */
 export function clearOwnedMarkers(doc: Document): void {
-  for (const marker of doc.querySelectorAll(`[${OWNED_ATTR}]`)) marker.remove();
+  for (const marker of doc.querySelectorAll(`[${OWNED_ATTR}], [${WISH_ATTR}]`)) marker.remove();
   for (const badge of doc.querySelectorAll(`[${CHECKED_ATTR}]`)) badge.removeAttribute(CHECKED_ATTR);
 }
 
 /**
- * Adds an "Owned" marker beside every Steam badge whose game is in a library:
- * in the tile's other corner, or inline for inline badges. Works on badges
- * from any site, since it reads only the badge's own Steam id. A pack badge
- * is marked once every game in it has an answer.
+ * Adds an "Owned" marker beside every Steam badge whose game is in a library,
+ * or a wishlist marker when it's owned nowhere but wishlisted: in the tile's
+ * other corner, or inline for inline badges. Works on badges from any site,
+ * since it reads only the badge's own Steam id. A pack badge is marked once
+ * every game in it has an answer.
  * Returns how many markers were added.
  */
 export function markOwnedBadges(doc: Document, lookup: OwnershipLookup): number {
   let added = 0;
   for (const badge of doc.querySelectorAll<HTMLElement>(`[${STEAM_REF_ATTR}]:not([${CHECKED_ATTR}])`)) {
-    const stores = lookup(badge.getAttribute(STEAM_REF_ATTR) ?? '');
-    if (!stores) continue;
+    const answer = lookup(badge.getAttribute(STEAM_REF_ATTR) ?? '');
+    if (!answer) continue;
     badge.setAttribute(CHECKED_ATTR, '');
-    if (stores.length === 0) continue;
-    badge.after(createOwnedMarker(doc, stores, badge.classList.contains('bsl-badge--inline')));
+    const inline = badge.classList.contains('bsl-badge--inline');
+    if (answer.owned.length > 0) badge.after(createMarker(doc, 'owned', answer.owned, inline, ownedLabel(answer.owned)));
+    else if (answer.wishlisted?.length) badge.after(createMarker(doc, 'wish', answer.wishlisted, inline, wishLabel(answer.wishlisted)));
+    else continue;
     added++;
   }
   for (const pack of doc.querySelectorAll<HTMLElement>(`[${PACK_ATTR}]:not([${CHECKED_ATTR}])`)) {
     const entries = packGames(pack);
-    const games: OwnedGame[] = [];
+    const owned: PackGame[] = [];
+    const wished: PackGame[] = [];
+    let answered = 0;
     for (const [title, ref] of entries) {
       // A game not found on Steam can't be checked: it counts as not owned.
-      const stores = ref ? lookup(ref) : [];
-      if (!stores) break;
-      games.push({ title, stores });
+      const answer = ref ? lookup(ref) : { owned: [] };
+      if (!answer) break;
+      answered++;
+      if (answer.owned.length > 0) owned.push({ title, stores: answer.owned });
+      else if (answer.wishlisted?.length) wished.push({ title, stores: answer.wishlisted });
     }
-    if (games.length < entries.length) continue;
+    if (answered < entries.length) continue;
     pack.setAttribute(CHECKED_ATTR, '');
-    const owned = games.filter((game) => game.stores.length > 0);
-    if (owned.length === 0) continue;
-    pack.after(createPackOwnedMarker(doc, owned, games.length));
+    if (owned.length > 0) pack.after(createPackOwnedMarker(doc, owned, wished, entries.length));
+    else if (wished.length > 0) pack.after(createPackWishMarker(doc, wished, entries.length));
+    else continue;
     added++;
   }
   return added;
 }
 
+const names = (stores: Store[], joiner = ' and ') => stores.map((store) => STORE_NAMES[store]).join(joiner);
+const ownedLabel = (stores: Store[]) => `Owned on ${names(stores)}`;
+const wishLabel = (stores: Store[]) => `On your ${names(stores)} ${stores.length > 1 ? 'wishlists' : 'wishlist'}`;
+const where = (games: PackGame[]) => games.map((game) => `${game.title} (${names(game.stores, ', ')})`);
+const storesOf = (games: PackGame[]) => STORES.filter((store) => games.some((game) => game.stores.includes(store)));
+
 /**
  * For a pack: the green check when every game in it is owned, else "2/3" in
  * amber. Chips name every store holding any of them; the tooltip says which
- * game is where, one per line.
+ * game is where, one per line, then any wishlisted ones.
  */
-function createPackOwnedMarker(doc: Document, owned: OwnedGame[], total: number): HTMLElement {
-  const stores = STORES.filter((store) => owned.some((game) => game.stores.includes(store)));
-  const where = owned.map((game) => `${game.title} (${game.stores.map((store) => STORE_NAMES[store]).join(', ')})`);
+function createPackOwnedMarker(doc: Document, owned: PackGame[], wished: PackGame[], total: number): HTMLElement {
   const all = owned.length === total;
-  const label = [all ? `Own all ${total}` : `Own ${owned.length} of ${total}`, ...where].join('\n');
-  const marker = createOwnedMarker(doc, stores, false, label);
+  const label = [
+    all ? `Own all ${total}` : `Own ${owned.length} of ${total}`,
+    ...where(owned),
+    ...(wished.length > 0 ? ['Wishlisted:', ...where(wished)] : []),
+  ].join('\n');
+  const marker = createMarker(doc, 'owned', storesOf(owned), false, label);
   if (!all) {
     marker.classList.add('bsl-owned--partial');
     marker.querySelector('.bsl-owned__check')!.textContent = `${owned.length}/${total}`;
@@ -97,23 +119,30 @@ function createPackOwnedMarker(doc: Document, owned: OwnedGame[], total: number)
   return marker;
 }
 
-/** A green check followed by one chip per store, in that store's colors. */
-function createOwnedMarker(
-  doc: Document,
-  stores: Store[],
-  inline: boolean,
-  label = `Owned on ${stores.map((store) => STORE_NAMES[store]).join(' and ')}`,
-): HTMLElement {
+/** For a pack with nothing owned but some games wishlisted: the heart, and which ones. */
+function createPackWishMarker(doc: Document, wished: PackGame[], total: number): HTMLElement {
+  const label = [`${wished.length} of ${total} on your wishlists`, ...where(wished)].join('\n');
+  return createMarker(doc, 'wish', storesOf(wished), false, label);
+}
+
+/**
+ * Owned: a green check followed by one chip per store, in that store's colors.
+ * Wishlisted: a single pink "♥ Wishlisted" pill, with the stores in the
+ * tooltip; store chips there would make it read like the owned marker.
+ */
+function createMarker(doc: Document, kind: 'owned' | 'wish', stores: Store[], inline: boolean, label: string): HTMLElement {
   const marker = doc.createElement('span');
-  marker.setAttribute(OWNED_ATTR, stores.join(' '));
+  marker.setAttribute(kind === 'owned' ? OWNED_ATTR : WISH_ATTR, stores.join(' '));
   marker.className = inline ? 'bsl-owned bsl-owned--inline' : 'bsl-owned';
+  if (kind === 'wish') marker.classList.add('bsl-owned--wish');
   marker.setAttribute('role', 'img');
   marker.setAttribute('aria-label', label.split('\n').join('. '));
   setTip(marker, label);
   const check = doc.createElement('span');
   check.className = 'bsl-owned__check';
-  check.textContent = '✓';
+  check.textContent = kind === 'owned' ? '✓' : '♥ Wishlisted';
   marker.append(check);
+  if (kind === 'wish') return marker;
   for (const store of stores) {
     const chip = doc.createElement('span');
     chip.className = `bsl-chip bsl-chip--${store}`;

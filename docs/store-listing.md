@@ -25,6 +25,8 @@ On every bundle page, each game gets:
   ("Steam 93% ↗") when the bundle page doesn't already show it.
 • A "✓ Owned" marker if it's already in your library, naming where: Steam, GOG
   and/or Epic Games Store.
+• A "♥ Wishlisted" marker if you don't own it but it's on your Steam or GOG
+  wishlist.
 • For multi-game packs on Fanatical: how many of the games you own ("2/3"), and
   a Steam link for each game in the pack's details.
 
@@ -74,7 +76,7 @@ My reading of the form — check the current wording when you fill it in.
 |---|---|---|
 | Website content | **Yes** | Game names from bundle pages are sent to Steam search and IsThereAnyDeal. |
 | Financial and payment information | **Yes** (conservative) | Epic order history is read to find purchases; only offer IDs are kept, locally. |
-| Personally identifiable info, health, authentication info, personal communications, location, web history, user activity | No | Not read or not transmitted. Sign-in cookies are used by the browser for the stores' own requests; the extension never reads them. |
+| Personally identifiable info, health, authentication info, personal communications, location, web history, user activity | No | Not read or not transmitted. (Steam and GOG wishlists are read, like libraries, and kept only on the device.) Sign-in cookies are used by the browser for the stores' own requests; the extension never reads them. |
 
 Certify all three: not sold to third parties; not used or transferred for
 purposes unrelated to the single purpose; not used for creditworthiness or

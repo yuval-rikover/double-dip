@@ -33,10 +33,11 @@ describe('getSteamLibrary', () => {
       status: 'ok',
       apps: [18500, 225260],
       packages: [25920],
+      wishlist: [1],
       fetchedAt: NOW,
     });
     expect(calls[0]!.init?.credentials).toBe('include');
-    expect(store.value).toEqual({ apps: [18500, 225260], packages: [25920], fetchedAt: NOW });
+    expect(store.value).toEqual({ apps: [18500, 225260], packages: [25920], wishlist: [1], fetchedAt: NOW });
   });
 
   it('reports signed out on empty lists, and drops the cached library', async () => {

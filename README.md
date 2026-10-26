@@ -7,6 +7,8 @@ shows:
   out where the page already shows it.
 - **Where you already own it**: "✓ Steam GOG", from your Steam, GOG and Epic
   Games Store libraries.
+- **Or that it's on your wishlist**: "♥ Wishlisted", from your Steam and GOG
+  wishlists, for games you don't own yet.
 - **For multi-game packs** (Fanatical): how many of the games you own ("2/3"),
   and a Steam link for each game in the pack's details.
 

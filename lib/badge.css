@@ -128,6 +128,11 @@ li > .bsl-owned--inline > * {
   color: #fff !important;
 }
 
+/* Owned nowhere but wishlisted: one pink pill, no store chips. */
+.bsl-owned--wish .bsl-owned__check {
+  background: #d6336c;
+}
+
 /* A pack where only some games are owned: "2/3" in amber. */
 .bsl-owned--partial .bsl-owned__check {
   background: #c98a12;
