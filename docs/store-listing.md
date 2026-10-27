@@ -96,14 +96,16 @@ Build steps for reviewers: see README → Develop (`npm ci && npm run build:fire
 ## Screenshots
 
 Generated locally into `store-assets/` (git-ignored: the bundle shots show
-third-party game art). All are 24-bit PNG, no alpha.
+third-party game art). All are 24-bit PNG, no alpha. The stores show them at
+about half size, so each one is a few real tiles, zoomed in, under a headline.
 
 | File | Size | Caption |
 |---|---|---|
-| `1-humble-ratings-owned.png` | 1280×800 | Every game gets a Steam link with its rating, and games you already own are marked with the stores you own them on. |
-| `2-fanatical-ratings-packs.png` | 1280×800 | Works on Fanatical too, including multi-game packs: see how many of the games you already own. |
-| `3-humble-choice.png` | 1280×800 | Humble Choice months as well, next to Humble's own "Claimed" ribbon. |
-| `4-popup.png` | 1280×800 | The popup shows each library's status and refreshes after a purchase. |
+| `1-owned.png` | 1280×800 | See which games you already own, on Steam, GOG or Epic. |
+| `2-ratings.png` | 1280×800 | The Steam rating of every game; hover for the review count. |
+| `3-packs.png` | 1280×800 | Fanatical packs show how many of the games you own. |
+| `4-wishlist.png` | 1280×800 | Games on your Steam or GOG wishlist get a heart. |
+| `5-popup.png` | 1280×800 | Uses the sign-ins you already have; the popup shows each library. |
 | `promo-tile-440x280.png` | 440×280 | Chrome small promo tile. |
 
 Firefox Add-ons accepts the same 1280×800 shots.
