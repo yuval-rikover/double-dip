@@ -16,33 +16,27 @@ Steam links, ratings and "owned" markers (Steam, GOG, Epic) on Humble Bundle, Hu
 
 ## Detailed description
 
-Thinking about a Humble Bundle, a Humble Choice month, a Fanatical or a Green Man
-Gaming bundle? See at a glance which games you already own, and jump to any
-game's Steam page.
+Paste as plain text: one line per paragraph or bullet, since both stores keep
+line breaks.
+
+```text
+Thinking about a Humble Bundle, a Humble Choice month, a Fanatical or a Green Man Gaming bundle? See at a glance which games you already own, and jump to any game's Steam page.
 
 On every bundle page, each game gets:
-• A "Steam ↗" link to its Steam store page, with the game's Steam rating
-  ("Steam 93% ↗") when the bundle page doesn't already show it.
-• A "✓ Owned" marker if it's already in your library, naming where: Steam, GOG
-  and/or Epic Games Store.
-• A "♥ Wishlisted" marker if you don't own it but it's on your Steam or GOG
-  wishlist.
-• For multi-game packs on Fanatical: how many of the games you own ("2/3"), and
-  each game's Steam rating and Steam link from the pack's "3 games ▾" label.
+• A "Steam ↗" link to its Steam store page, with the game's Steam rating ("Steam 93% ↗") when the bundle page doesn't already show it.
+• A "✓ Owned" marker if it's already in your library, naming where: Steam, GOG and/or Epic Games Store.
+• A "♥ Wishlisted" marker if you don't own it but it's on your Steam or GOG wishlist.
+• For multi-game packs on Fanatical: how many of the games you own ("2/3"), and each game's Steam rating and Steam link from the pack's "3 games ▾" label.
 
 How it works:
-• Owned markers need you to be signed in to each store in this browser. It uses
-  the sign-ins you already have — no extra accounts, no passwords, no API keys.
-• Games are matched by store ID wherever possible (via IsThereAnyDeal), so
-  different editions and spellings don't trip it up.
-• Signed out of a store? It's simply skipped. The toolbar popup shows each
-  store's status and refreshes your libraries after a purchase.
+• Owned markers need you to be signed in to each store in this browser. It uses the sign-ins you already have — no extra accounts, no passwords, no API keys.
+• Games are matched by store ID wherever possible (via IsThereAnyDeal), so different editions and spellings don't trip it up.
+• Signed out of a store? It's simply skipped. The toolbar popup shows each store's status and refreshes your libraries after a purchase.
 
-Privacy: nothing is sent to the developer — no analytics, no ads, no tracking.
-Your library stays in your browser. Full policy: https://github.com/yuval-rikover/double-dip/blob/main/PRIVACY.md
+Privacy: nothing is sent to the developer — no analytics, no ads, no tracking. Your library stays in your browser. Full policy: https://github.com/yuval-rikover/double-dip/blob/main/PRIVACY.md
 
-An independent project, not affiliated with or endorsed by any of the stores or
-bundle sites mentioned above.
+An independent project, not affiliated with or endorsed by any of the stores or bundle sites mentioned above.
+```
 
 ## Category
 
