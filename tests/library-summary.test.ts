@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { awaitsChange, describeLibrary, formatAge, summarizeLibrary } from '../lib/library-summary';
+import { awaitsChange, describeLibrary, formatAge, savedSummaries, summarizeLibrary } from '../lib/library-summary';
 
 const NOW = 1_800_000_000_000;
 const MIN = 60_000;
@@ -18,6 +18,20 @@ describe('summarizeLibrary', () => {
   it('passes signed-out and error through', () => {
     expect(summarizeLibrary({ status: 'signed-out' }, () => 0)).toEqual({ status: 'signed-out' });
     expect(summarizeLibrary({ status: 'error', message: 'x' }, () => 0)).toEqual({ status: 'error', message: 'x' });
+  });
+});
+
+describe('savedSummaries', () => {
+  it('counts the saved libraries and marks the missing ones as checking', () => {
+    const saved = {
+      'steam-library': { apps: [1, 2], packages: [], fetchedAt: NOW },
+      'epic-library': { offers: ['a'], newestOrderId: null, fullSyncAt: NOW, fetchedAt: NOW, signedOut: true },
+    };
+    expect(savedSummaries(saved)).toEqual({
+      steam: { status: 'ok', count: 2, fetchedAt: NOW },
+      gog: { status: 'checking' },
+      epic: { status: 'ok', count: 1, fetchedAt: NOW, signedOut: true },
+    });
   });
 });
 

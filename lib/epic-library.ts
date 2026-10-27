@@ -15,9 +15,18 @@ export type EpicLibrary = LibraryResult<OwnedEpic>;
 /** What pages get: Epic is never waited on, so a first sync reads as "syncing". */
 export type EpicLibraryNow = EpicLibrary | { status: 'syncing' };
 
+/** A sync that found no library: signed out, or Epic failed. */
+export type EpicFailure = Exclude<EpicLibrary, { status: 'ok' }>;
+
 export interface EpicLibraryDeps {
   fetch: typeof fetch;
   store: LibraryStore<OwnedEpic>;
+  /**
+   * Keeps the last sync's failure for the browser session. The background is
+   * suspended when idle and forgets it; with no library cached, the popup
+   * would read "syncing" until the next check ends.
+   */
+  lastFailure?: LibraryStore<EpicFailure>;
   now?: () => number;
 }
 
@@ -115,7 +124,12 @@ export function createEpicSource(deps: EpicLibraryDeps) {
 
   const refresh = (force = false): Promise<EpicLibrary> => {
     running ??= getEpicLibrary(deps, { force })
-      .then((library) => (last = library))
+      .then(async (library) => {
+        last = library;
+        const kept = library.status === 'ok' ? deps.lastFailure?.clear() : deps.lastFailure?.set(library);
+        await kept?.catch(() => undefined);
+        return library;
+      })
       .finally(() => (running = null));
     return running;
   };
@@ -130,7 +144,9 @@ export function createEpicSource(deps: EpicLibraryDeps) {
     if (age >= MAX_AGE || cached?.signedOut) void refresh().catch(() => undefined);
     if (cached) return { status: 'ok', ...cached };
     // No cache: report the last sync's outcome (signed out, error) if there was one.
-    return !wasSyncing && last && last.status !== 'ok' ? last : { status: 'syncing' };
+    if (wasSyncing) return { status: 'syncing' };
+    const outcome = last ?? (await deps.lastFailure?.get());
+    return outcome && outcome.status !== 'ok' ? outcome : { status: 'syncing' };
   };
 
   /**

@@ -1,11 +1,11 @@
 import { BADGE_ATTR, STEAM_REF_ATTR } from './badge';
+import { PACK_ATTR, PACK_RATINGS_ATTR, packEntries } from './pack-data';
+import { ratingPercent, reviewsText } from './rating-label';
 import type { SteamRating } from './steam-ratings';
 import { setTip, TIP_ATTR } from './tooltip';
 
-/** Set on a Steam badge once its rating has been added or ruled out. */
+/** Set on a Steam or pack badge once its rating has been added or ruled out. */
 const RATED_ATTR = 'data-bsl-rated';
-/** Below this many reviews Steam won't call a game "Very Positive": too few to go by. */
-const FEW_REVIEWS = 50;
 
 /** Rating for a Steam id: null for none, undefined while not answered yet. */
 export type RatingLookup = (steamRef: string) => SteamRating | null | undefined;
@@ -48,9 +48,15 @@ function unratedBadges(doc: Document): HTMLElement[] {
   return [...doc.querySelectorAll<HTMLElement>(`a[${STEAM_REF_ATTR}]:not([${RATED_ATTR}])`)];
 }
 
-/** Steam ids of the badges still waiting for a rating. */
+function unratedPacks(doc: Document): HTMLElement[] {
+  return [...doc.querySelectorAll<HTMLElement>(`[${PACK_ATTR}]:not([${RATED_ATTR}])`)];
+}
+
+/** Steam ids of the badges still waiting for a rating, including every game in an unrated pack. */
 export function unratedSteamRefs(doc: Document): string[] {
-  return [...new Set(unratedBadges(doc).map((badge) => badge.getAttribute(STEAM_REF_ATTR) ?? ''))].filter(Boolean);
+  const refs = unratedBadges(doc).map((badge) => badge.getAttribute(STEAM_REF_ATTR) ?? '');
+  for (const pack of unratedPacks(doc)) refs.push(...packEntries(pack).map(([, ref]) => ref ?? ''));
+  return [...new Set(refs)].filter(Boolean);
 }
 
 /**
@@ -58,7 +64,8 @@ export function unratedSteamRefs(doc: Document): string[] {
  * Steam's score and dimmed when there are few reviews, with the label and
  * review count in the tooltip. Badges on
  * tiles matching `tileSelector` that already show the rating are skipped,
- * without asking Steam. Returns how many badges got a rating.
+ * without asking Steam. Pack badges keep their games' ratings for their
+ * tooltip and menu. Returns how many Steam badges got a rating.
  */
 export function markRatedBadges(doc: Document, lookup: RatingLookup, tileSelector: string): number {
   let added = 0;
@@ -74,24 +81,20 @@ export function markRatedBadges(doc: Document, lookup: RatingLookup, tileSelecto
     addRating(doc, badge, rating);
     added++;
   }
+  // A pack's games get theirs in its tooltip and menu, once all are answered.
+  for (const pack of unratedPacks(doc)) {
+    const ratings = packEntries(pack).map(([, ref]) => (ref ? lookup(ref) : null));
+    if (ratings.includes(undefined)) continue;
+    pack.setAttribute(RATED_ATTR, '');
+    pack.setAttribute(PACK_RATINGS_ATTR, JSON.stringify(ratings));
+  }
   return added;
 }
 
 function addRating(doc: Document, badge: HTMLElement, rating: SteamRating): void {
-  const percent = doc.createElement('span');
-  const few = rating.count < FEW_REVIEWS;
-  percent.className = `bsl-rating bsl-rating--${tone(rating.score)}${few ? ' bsl-rating--few' : ''}`;
-  percent.textContent = `${rating.percent}%`;
   badge.textContent = 'Steam ';
-  badge.append(percent, ' ↗');
-  const reviews = `${rating.label} · ${rating.percent}% of ${rating.count.toLocaleString('en-US')} ${rating.count === 1 ? 'review' : 'reviews'}`;
+  badge.append(ratingPercent(doc, rating), ' ↗');
   // Under the game's name, the first line.
   const [name = '', ...rest] = (badge.getAttribute(TIP_ATTR) ?? '').split('\n');
-  setTip(badge, [name, few ? `${reviews}, too few to go by` : reviews, ...rest].join('\n'));
-}
-
-/** Steam's own grouping: 6–9 positive, 5 mixed, 1–4 negative. */
-function tone(score: number): 'positive' | 'mixed' | 'negative' {
-  if (score >= 6) return 'positive';
-  return score === 5 ? 'mixed' : 'negative';
+  setTip(badge, [name, reviewsText(rating), ...rest].join('\n'));
 }

@@ -1,4 +1,11 @@
-import { awaitsChange, describeLibrary, type LibrarySummaries, type LibrarySummary } from '../../lib/library-summary';
+import { LIBRARY_KEYS } from '../../lib/library-cache';
+import {
+  awaitsChange,
+  describeLibrary,
+  savedSummaries,
+  type LibrarySummaries,
+  type LibrarySummary,
+} from '../../lib/library-summary';
 import type { GetLibraryStatusMessage, GetLibraryStatusResponse } from '../../lib/messages';
 import { STORE_NAMES, type Store } from '../../lib/ownership';
 
@@ -21,10 +28,21 @@ function requiredOrigins(): string[] {
 }
 
 let pollTimer: ReturnType<typeof setTimeout> | undefined;
+let answered = false;
+
+/**
+ * Shows the libraries as last saved while the background checks the stores,
+ * which can take a few seconds (a stale library is fetched again).
+ */
+async function showSaved(): Promise<void> {
+  const saved = await browser.storage.local.get(Object.values(LIBRARY_KEYS));
+  if (!answered) render(savedSummaries(saved));
+}
 
 async function loadStatus(refresh: boolean): Promise<void> {
   const message: GetLibraryStatusMessage = { type: 'getLibraryStatus', refresh };
   const summaries = (await browser.runtime.sendMessage(message)) as GetLibraryStatusResponse | undefined;
+  answered = true;
   render(summaries);
   // Check back while a first Epic sync runs, or while a store reads as
   // signed out: the user may be signing in from the popup's link right now.
@@ -90,4 +108,5 @@ grantButton.addEventListener('click', () => {
 browser.permissions.contains({ origins }).then((granted) => {
   access.hidden = granted;
 });
+void showSaved();
 void loadStatus(false);

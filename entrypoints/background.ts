@@ -1,9 +1,9 @@
 import type { KeyValueCache } from '../lib/cache';
 import { createLimiter, shareInFlight } from '../lib/concurrency';
-import { createEpicSource, type OwnedEpic } from '../lib/epic-library';
+import { createEpicSource, type EpicFailure, type OwnedEpic } from '../lib/epic-library';
 import { getGogLibrary, type OwnedGog } from '../lib/gog-library';
 import { LIBRARY_KEYS, type LibraryStore } from '../lib/library-cache';
-import { summarizeLibrary, type LibrarySummaries } from '../lib/library-summary';
+import { LIBRARY_COUNTS, summarizeLibrary, type LibrarySummaries } from '../lib/library-summary';
 import { isExtensionMessage, type ExtensionMessage } from '../lib/messages';
 import { getOwnership } from '../lib/ownership';
 import { steamRefsToShopIds, type CachedShopIds } from '../lib/shop-map';
@@ -18,11 +18,11 @@ function keyValueCache<V>(): KeyValueCache<V> {
   };
 }
 
-function libraryStore<T>(key: string): LibraryStore<T> {
+function libraryStore<T>(key: string, area = browser.storage.local): LibraryStore<T> {
   return {
-    get: async () => (await browser.storage.local.get(key))[key] as T | undefined,
-    set: (library) => browser.storage.local.set({ [key]: library }),
-    clear: () => browser.storage.local.remove(key),
+    get: async () => (await area.get(key))[key] as T | undefined,
+    set: (library) => area.set({ [key]: library }),
+    clear: () => area.remove(key),
   };
 }
 
@@ -42,7 +42,12 @@ const steamLibrary = (force = false) =>
 const gogLibrary = (force = false) =>
   force ? getGogLibrary({ fetch: fetchFn, store: gogStore }, { force }) : gogLibraryShared();
 // Epic's history takes many requests to read, so pages never wait for it.
-const epic = createEpicSource({ fetch: fetchFn, store: libraryStore<OwnedEpic>(LIBRARY_KEYS.epic) });
+const epic = createEpicSource({
+  fetch: fetchFn,
+  store: libraryStore<OwnedEpic>(LIBRARY_KEYS.epic),
+  // Session storage: kept while the background sleeps, gone when the browser closes.
+  lastFailure: libraryStore<EpicFailure>('epic-last-failure', browser.storage.session),
+});
 // Shared by every title lookup: Humble pages send one request per title.
 const steamSearchLimit = createLimiter(SEARCH_CONCURRENCY);
 
@@ -53,9 +58,9 @@ async function libraryStatus(refresh: boolean): Promise<LibrarySummaries> {
     refresh ? epic.refresh(true) : epic.status(),
   ]);
   return {
-    steam: summarizeLibrary(steam, (library) => library.apps.length),
-    gog: summarizeLibrary(gog, (library) => library.owned.length),
-    epic: summarizeLibrary(epicLibrary, (library) => library.offers.length),
+    steam: summarizeLibrary(steam, LIBRARY_COUNTS.steam),
+    gog: summarizeLibrary(gog, LIBRARY_COUNTS.gog),
+    epic: summarizeLibrary(epicLibrary, LIBRARY_COUNTS.epic),
   };
 }
 

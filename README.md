@@ -9,8 +9,9 @@ shows:
   Games Store libraries.
 - **Or that it's on your wishlist**: "♥ Wishlisted", from your Steam and GOG
   wishlists, for games you don't own yet.
-- **For multi-game packs** (Fanatical): how many of the games you own ("2/3"),
-  and a Steam link for each game in the pack's details.
+- **For multi-game packs** (Fanatical): how many of the games you own ("2/3").
+  The pack's "3 games ▾" label lists each game with its Steam rating and
+  where you own it; click it for each game's Steam link.
 
 Works on:
 

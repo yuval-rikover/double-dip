@@ -165,6 +165,22 @@ describe('markOwnedBadges on packs', () => {
     expect(el.querySelector('[data-bsl-owned]')).toBeNull();
   });
 
+  it("marks each game in the pack's menu as owned or wishlisted", () => {
+    const el = pack(trio);
+    markOwnedBadges(document, (ref) => (ref === 'app/1165990' ? { owned: [], wishlisted: ['gog'] } : lookup(ref)));
+    el.querySelector('button')!.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+    const rows = [...document.querySelectorAll('.bsl-menu a')].map((link) => [
+      link.querySelector('.bsl-pack-row__stores')?.textContent ?? '',
+      link.getAttribute('aria-label'),
+    ]);
+    expect(rows).toEqual([
+      ['✓Steam', 'Brutal Legend. Owned on Steam'],
+      ['✓SteamGOG', 'Psychonauts. Owned on Steam and GOG'],
+      ['♥', 'Kiln. On your GOG wishlist'],
+    ]);
+    document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+  });
+
   it('counts a game not on Steam as not owned', () => {
     const el = pack([trio[0]!, { name: 'Critter Café', steam: null }]);
     markOwnedBadges(document, lookup);

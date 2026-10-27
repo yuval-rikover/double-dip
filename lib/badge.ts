@@ -1,12 +1,12 @@
+import { PACK_ATTR, type PackEntry } from './pack-data';
+import { packTip, togglePackMenu } from './pack-menu';
 import { formatSteamRef, steamSearchUrl, steamStoreUrl, type SteamRef } from './steam';
-import { setTip } from './tooltip';
+import { setRichTip, setTip } from './tooltip';
 
 /** Marks an element this extension added, so re-scans don't add it twice. */
 export const BADGE_ATTR = 'data-bsl-badge';
 /** On a Steam badge with a known id: the id, as "app/123" or "sub/456". */
 export const STEAM_REF_ATTR = 'data-bsl-steam';
-/** On a pack badge: the games inside, as JSON `[title, "app/123" | null][]`. */
-export const PACK_ATTR = 'data-bsl-pack';
 
 /** A game in a pack, with its Steam id once looked up (null: not on Steam). */
 export interface PackGame {
@@ -40,21 +40,29 @@ export function createSteamBadge(
 }
 
 /**
- * A "3 games" label for a pack: it has no single Steam page, so this is not a
- * link. Its tooltip lists the games; the site's own details view lists them too,
- * where each gets its own Steam badge.
+ * A "3 games ▾" button for a pack: it has no single Steam page, so a click
+ * opens a menu with each game's Steam link. Its tooltip lists the games,
+ * with their ratings and owned marks once known.
  */
 export function createPackBadge(doc: Document, games: PackGame[]): HTMLElement {
-  const label = doc.createElement('span');
-  label.setAttribute(BADGE_ATTR, '');
-  label.setAttribute(
-    PACK_ATTR,
-    JSON.stringify(games.map((game) => [game.name, game.steam ? formatSteamRef(game.steam) : null])),
+  const button = doc.createElement('button');
+  button.type = 'button';
+  button.setAttribute(BADGE_ATTR, '');
+  const entries: PackEntry[] = games.map((game) => [game.name, game.steam ? formatSteamRef(game.steam) : null]);
+  button.setAttribute(PACK_ATTR, JSON.stringify(entries));
+  button.setAttribute('aria-expanded', 'false');
+  button.classList.add('bsl-badge', 'bsl-badge--pack');
+  const arrow = doc.createElement('span');
+  arrow.setAttribute('aria-hidden', 'true');
+  arrow.textContent = ' ▾';
+  button.append(`${games.length} games`, arrow);
+  setRichTip(
+    button,
+    [`Pack of ${games.length}`, ...games.map((game) => game.name), 'Click for their Steam pages'].join('\n'),
+    () => packTip(doc, button),
   );
-  label.classList.add('bsl-badge', 'bsl-badge--pack');
-  label.textContent = `${games.length} games`;
-  setTip(label, [`Pack of ${games.length}`, ...games.map((game) => game.name)].join('\n'));
-  return label;
+  guardBadgeClicks(doc);
+  return button;
 }
 
 const guardedWindows = new WeakSet<Window>();
@@ -65,7 +73,8 @@ const guardedWindows = new WeakSet<Window>();
  * badge isn't enough: some sites (Green Man Gaming) listen in the capture
  * phase, which runs before the badge sees the click. So stop it at the very
  * start, in a capture listener on the window. The link's default action —
- * opening Steam — still happens. Labels that aren't links let clicks through.
+ * opening Steam — still happens. A pack badge's menu opens from here too,
+ * since its own listeners never see the click.
  */
 function guardBadgeClicks(doc: Document): void {
   const win = doc.defaultView;
@@ -76,7 +85,15 @@ function guardBadgeClicks(doc: Document): void {
     (event) => {
       const target = event.target as Node | null;
       const element = target && target.nodeType === 1 ? (target as Element) : target?.parentElement;
-      if (element?.closest(`a[${BADGE_ATTR}]`)) event.stopImmediatePropagation();
+      const pack = element?.closest<HTMLElement>(`[${BADGE_ATTR}][${PACK_ATTR}]`);
+      if (pack) {
+        event.stopImmediatePropagation();
+        event.preventDefault();
+        // A click from the keyboard has no pointer, so detail is 0.
+        togglePackMenu(pack, event.detail === 0);
+      } else if (element?.closest(`a[${BADGE_ATTR}]`)) {
+        event.stopImmediatePropagation();
+      }
     },
     true,
   );

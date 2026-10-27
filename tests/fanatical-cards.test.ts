@@ -100,27 +100,54 @@ describe('annotateFanaticalCards', () => {
     expect(cardClicks).toBe(1);
   });
 
-  it('labels a pack once all its games are looked up, without a link', () => {
+  it('labels a pack once all its games are looked up, with a button for their links', () => {
     document.body.innerHTML = card('PickAndMixCard', 'h2', 'AMID EVIL &amp; DUSK Double Pack');
     expect(annotateFanaticalCards(document, games, (title) => (title === 'DUSK' ? undefined : packLookup(title)))).toBe(0);
     expect(annotateFanaticalCards(document, games, packLookup)).toBe(1);
     const label = onlyBadge();
-    expect(label.tagName).toBe('SPAN');
-    expect(label.textContent).toBe('2 games');
-    expect(label.getAttribute('data-bsl-tip')).toBe('Pack of 2\nAMID EVIL\nDUSK');
+    expect(label.tagName).toBe('BUTTON');
+    expect(label.textContent).toBe('2 games ▾');
+    expect(label.getAttribute('data-bsl-tip')).toBe('Pack of 2\nAMID EVIL\nDUSK\nClick for their Steam pages');
     expect(JSON.parse(label.getAttribute('data-bsl-pack')!)).toEqual([
       ['AMID EVIL', 'app/673130'],
       ['DUSK', null],
     ]);
   });
 
-  it("lets a click on a pack's label reach the card", () => {
+  it("opens a menu of the pack's Steam links on click, without opening the card", () => {
     document.body.innerHTML = card('PickAndMixCard', 'h2', 'AMID EVIL &amp; DUSK Double Pack');
     let cardClicks = 0;
     document.querySelector('article')!.addEventListener('click', () => cardClicks++);
     annotateFanaticalCards(document, games, packLookup);
-    onlyBadge().dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    expect(cardClicks).toBe(1);
+    const button = onlyBadge();
+    button.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+    expect(cardClicks).toBe(0);
+    expect(button.getAttribute('aria-expanded')).toBe('true');
+    const links = [...document.querySelectorAll<HTMLAnchorElement>('.bsl-menu a')];
+    expect(links.map((link) => [link.textContent, link.href])).toEqual([
+      ['AMID EVIL ↗', 'https://store.steampowered.com/app/673130/'],
+      ['DUSK ↗ search', 'https://store.steampowered.com/search/?term=DUSK'],
+    ]);
+
+    // A second click closes it, and so does a click elsewhere.
+    button.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+    expect(document.querySelector('.bsl-menu')).toBeNull();
+    button.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+    document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    expect(document.querySelector('.bsl-menu')).toBeNull();
+    expect(button.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('closes the menu on Escape and puts focus back on the button', () => {
+    document.body.innerHTML = card('PickAndMixCard', 'h2', 'AMID EVIL &amp; DUSK Double Pack');
+    annotateFanaticalCards(document, games, packLookup);
+    const button = onlyBadge();
+    // From the keyboard: focus moves into the menu.
+    button.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }));
+    expect(document.activeElement?.textContent).toBe('AMID EVIL ↗');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(document.querySelector('.bsl-menu')).toBeNull();
+    expect(document.activeElement).toBe(button);
   });
 });
 

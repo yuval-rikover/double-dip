@@ -1,14 +1,26 @@
-import type { LibraryResult } from './library-cache';
+import type { OwnedEpic } from './epic-library';
+import type { OwnedGog } from './gog-library';
+import { LIBRARY_KEYS, type LibraryResult } from './library-cache';
 import type { Store } from './ownership';
+import type { OwnedSteam } from './steam-library';
 
 /** A library as the popup shows it: a count instead of the id lists. */
 export type LibrarySummary =
   | { status: 'ok'; count: number; fetchedAt: number; signedOut?: boolean }
   | { status: 'signed-out' }
   | { status: 'syncing' }
-  | { status: 'error'; message: string };
+  | { status: 'error'; message: string }
+  /** Nothing saved yet; the background is still asking the store. */
+  | { status: 'checking' };
 
 export type LibrarySummaries = Record<Store, LibrarySummary>;
+
+/** How many items each store's library holds. */
+export const LIBRARY_COUNTS = {
+  steam: (library: OwnedSteam) => library.apps.length,
+  gog: (library: OwnedGog) => library.owned.length,
+  epic: (library: OwnedEpic) => library.offers.length,
+};
 
 export function summarizeLibrary<T extends { fetchedAt: number; signedOut?: boolean }>(
   library: LibraryResult<T> | { status: 'syncing' },
@@ -17,6 +29,22 @@ export function summarizeLibrary<T extends { fetchedAt: number; signedOut?: bool
   if (library.status !== 'ok') return library;
   const summary: LibrarySummary = { status: 'ok', count: count(library), fetchedAt: library.fetchedAt };
   return library.signedOut ? { ...summary, signedOut: true } : summary;
+}
+
+/**
+ * The popup's first look, from `storage.local`, while the background checks
+ * the stores: each library as last saved, or "checking" where none is.
+ */
+export function savedSummaries(saved: Record<string, unknown>): LibrarySummaries {
+  const summary = <T extends { fetchedAt: number }>(key: string, count: (library: T) => number): LibrarySummary => {
+    const library = saved[key] as T | undefined;
+    return library ? summarizeLibrary({ status: 'ok', ...library }, count) : { status: 'checking' };
+  };
+  return {
+    steam: summary(LIBRARY_KEYS.steam, LIBRARY_COUNTS.steam),
+    gog: summary(LIBRARY_KEYS.gog, LIBRARY_COUNTS.gog),
+    epic: summary(LIBRARY_KEYS.epic, LIBRARY_COUNTS.epic),
+  };
 }
 
 /**
@@ -52,5 +80,7 @@ export function describeLibrary(summary: LibrarySummary, now: number): string {
       return 'Reading purchase history… (takes up to ~30 s)';
     case 'error':
       return `Couldn't load: ${summary.message}`;
+    case 'checking':
+      return 'Checking…';
   }
 }

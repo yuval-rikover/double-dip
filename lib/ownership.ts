@@ -9,6 +9,11 @@ export type Store = 'steam' | 'gog' | 'epic';
 
 export const STORE_NAMES: Record<Store, string> = { steam: 'Steam', gog: 'GOG', epic: 'Epic' };
 
+export const storeNames = (stores: Store[], joiner = ' and ') => stores.map((store) => STORE_NAMES[store]).join(joiner);
+export const ownedLabel = (stores: Store[]) => `Owned on ${storeNames(stores)}`;
+export const wishLabel = (stores: Store[]) =>
+  `On your ${storeNames(stores)} ${stores.length > 1 ? 'wishlists' : 'wishlist'}`;
+
 export interface OwnershipResult {
   /** Per Steam id ("app/225260"): the stores the user owns the game on. */
   owned: Record<string, Store[]>;

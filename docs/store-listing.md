@@ -28,7 +28,7 @@ On every bundle page, each game gets:
 • A "♥ Wishlisted" marker if you don't own it but it's on your Steam or GOG
   wishlist.
 • For multi-game packs on Fanatical: how many of the games you own ("2/3"), and
-  a Steam link for each game in the pack's details.
+  each game's Steam rating and Steam link from the pack's "3 games ▾" label.
 
 How it works:
 • Owned markers need you to be signed in to each store in this browser. It uses

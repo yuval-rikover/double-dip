@@ -19,7 +19,26 @@ export function setTip(el: HTMLElement, text: string): void {
   installTooltips(el.ownerDocument);
 }
 
-const installed = new WeakSet<Document>();
+/** Builds a tooltip's content when it shows, in place of the text lines. */
+const renderers = new WeakMap<Element, () => Node[]>();
+
+/**
+ * Like `setTip`, but the tooltip shows what `render` builds at that moment,
+ * so it can carry what was learned since. `text` stays as the screen-reader
+ * description.
+ */
+export function setRichTip(el: HTMLElement, text: string, render: () => Node[]): void {
+  renderers.set(el, render);
+  setTip(el, text);
+}
+
+/** Each page's hide function, once tooltips are installed there. */
+const installed = new WeakMap<Document, () => void>();
+
+/** Hides the page's tooltip, if one is showing, until the pointer moves to another element. */
+export function hideTip(doc: Document): void {
+  installed.get(doc)?.();
+}
 
 /**
  * One tooltip element per page, on <body> rather than inside the tile: game
@@ -28,7 +47,6 @@ const installed = new WeakSet<Document>();
  */
 function installTooltips(doc: Document): void {
   if (installed.has(doc)) return;
-  installed.add(doc);
   let tip: HTMLElement | null = null;
   let target: HTMLElement | null = null;
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -38,16 +56,26 @@ function installTooltips(doc: Document): void {
     target = null;
     tip?.remove();
   };
+  installed.set(doc, () => {
+    clearTimeout(timer);
+    tip?.remove();
+  });
 
   const show = (el: HTMLElement) => {
-    if (!el.isConnected || !doc.body) return;
-    const [first = '', ...rest] = (el.getAttribute(TIP_ATTR) ?? '').split('\n');
+    // A pack badge with its menu open: the menu says it all.
+    if (!el.isConnected || !doc.body || el.getAttribute('aria-expanded') === 'true') return;
     tip ??= doc.createElement('div');
     tip.className = 'bsl-tip';
     tip.setAttribute('aria-hidden', 'true');
-    const heading = doc.createElement('strong');
-    heading.textContent = first;
-    tip.replaceChildren(heading, ...rest.map((line) => Object.assign(doc.createElement('div'), { textContent: line })));
+    const render = renderers.get(el);
+    if (render) {
+      tip.replaceChildren(...render());
+    } else {
+      const [first = '', ...rest] = (el.getAttribute(TIP_ATTR) ?? '').split('\n');
+      const heading = doc.createElement('strong');
+      heading.textContent = first;
+      tip.replaceChildren(heading, ...rest.map((line) => Object.assign(doc.createElement('div'), { textContent: line })));
+    }
     doc.body.append(tip);
     place(tip, el.getBoundingClientRect(), doc.documentElement);
   };

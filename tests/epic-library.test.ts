@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createEpicSource, fetchEpicOrders, getEpicLibrary, type OwnedEpic } from '../lib/epic-library';
+import { createEpicSource, fetchEpicOrders, getEpicLibrary, type EpicFailure, type OwnedEpic } from '../lib/epic-library';
 import type { LibraryStore } from '../lib/library-cache';
 
 const NOW = 1_800_000_000_000;
@@ -31,8 +31,8 @@ function historyFetch(orders: unknown[], perPage = 2) {
 const signedOutFetch = (async () =>
   new Response('Found. Redirecting to /auth/login', { headers: { 'content-type': 'text/plain' } })) as typeof fetch;
 
-function memoryStore(initial?: OwnedEpic): LibraryStore<OwnedEpic> & { value?: OwnedEpic } {
-  const store: LibraryStore<OwnedEpic> & { value?: OwnedEpic } = {
+function memoryStore<T = OwnedEpic>(initial?: NoInfer<T>): LibraryStore<T> & { value?: T } {
+  const store: LibraryStore<T> & { value?: T } = {
     value: initial,
     get: async () => store.value,
     set: async (library) => void (store.value = library),
@@ -212,5 +212,22 @@ describe('createEpicSource', () => {
     const epic = createEpicSource({ fetch: signedOutFetch, store: memoryStore(), now: () => NOW });
     await epic.refresh();
     expect(await epic.now()).toEqual({ status: 'signed-out' });
+  });
+
+  it('still reports signed out after the background was suspended', async () => {
+    const lastFailure = memoryStore<EpicFailure>();
+    const before = createEpicSource({ fetch: signedOutFetch, store: memoryStore(), lastFailure, now: () => NOW });
+    await before.refresh();
+    // A new source, as when the background wakes up again: only the stores remain.
+    const after = createEpicSource({ fetch: signedOutFetch, store: memoryStore(), lastFailure, now: () => NOW });
+    expect(await after.status()).toEqual({ status: 'signed-out' });
+  });
+
+  it('forgets the kept failure once a sync succeeds', async () => {
+    const lastFailure = memoryStore<EpicFailure>({ status: 'signed-out' });
+    const { fn } = historyFetch([order('o1', ['a'])]);
+    const epic = createEpicSource({ fetch: fn, store: memoryStore(), lastFailure, now: () => NOW });
+    await epic.refresh();
+    expect(lastFailure.value).toBeUndefined();
   });
 });

@@ -1,5 +1,6 @@
-import { PACK_ATTR, STEAM_REF_ATTR } from './badge';
-import { STORE_NAMES, type Store } from './ownership';
+import { STEAM_REF_ATTR } from './badge';
+import { PACK_ATTR, PACK_STORES_ATTR, packEntries } from './pack-data';
+import { ownedLabel, STORE_NAMES, storeNames as names, wishLabel, type Store } from './ownership';
 import { setTip } from './tooltip';
 
 const STORES = Object.keys(STORE_NAMES) as Store[];
@@ -24,30 +25,21 @@ export function uncheckedSteamRefs(doc: Document): string[] {
     (badge) => badge.getAttribute(STEAM_REF_ATTR) ?? '',
   );
   for (const pack of doc.querySelectorAll(`[${PACK_ATTR}]:not([${CHECKED_ATTR}])`)) {
-    refs.push(...packGames(pack).flatMap(([, ref]) => (ref ? [ref] : [])));
+    refs.push(...packEntries(pack).flatMap(([, ref]) => (ref ? [ref] : [])));
   }
   return [...new Set(refs.filter(Boolean))];
 }
-
-type PackEntry = [title: string, steamRef: string | null];
 
 interface PackGame {
   title: string;
   stores: Store[];
 }
 
-function packGames(pack: Element): PackEntry[] {
-  try {
-    return JSON.parse(pack.getAttribute(PACK_ATTR) ?? '[]') as PackEntry[];
-  } catch {
-    return [];
-  }
-}
-
 /** Removes every owned and wishlist marker, so the next `markOwnedBadges` starts over. */
 export function clearOwnedMarkers(doc: Document): void {
   for (const marker of doc.querySelectorAll(`[${OWNED_ATTR}], [${WISH_ATTR}]`)) marker.remove();
   for (const badge of doc.querySelectorAll(`[${CHECKED_ATTR}]`)) badge.removeAttribute(CHECKED_ATTR);
+  for (const pack of doc.querySelectorAll(`[${PACK_STORES_ATTR}]`)) pack.removeAttribute(PACK_STORES_ATTR);
 }
 
 /**
@@ -71,20 +63,22 @@ export function markOwnedBadges(doc: Document, lookup: OwnershipLookup): number 
     added++;
   }
   for (const pack of doc.querySelectorAll<HTMLElement>(`[${PACK_ATTR}]:not([${CHECKED_ATTR}])`)) {
-    const entries = packGames(pack);
+    const entries = packEntries(pack);
     const owned: PackGame[] = [];
     const wished: PackGame[] = [];
-    let answered = 0;
+    const answers: GameStores[] = [];
     for (const [title, ref] of entries) {
       // A game not found on Steam can't be checked: it counts as not owned.
       const answer = ref ? lookup(ref) : { owned: [] };
       if (!answer) break;
-      answered++;
+      answers.push(answer);
       if (answer.owned.length > 0) owned.push({ title, stores: answer.owned });
       else if (answer.wishlisted?.length) wished.push({ title, stores: answer.wishlisted });
     }
-    if (answered < entries.length) continue;
+    if (answers.length < entries.length) continue;
     pack.setAttribute(CHECKED_ATTR, '');
+    // For the pack's menu of Steam links.
+    pack.setAttribute(PACK_STORES_ATTR, JSON.stringify(answers));
     if (owned.length > 0) pack.after(createPackOwnedMarker(doc, owned, wished, entries.length));
     else if (wished.length > 0) pack.after(createPackWishMarker(doc, wished, entries.length));
     else continue;
@@ -93,9 +87,6 @@ export function markOwnedBadges(doc: Document, lookup: OwnershipLookup): number 
   return added;
 }
 
-const names = (stores: Store[], joiner = ' and ') => stores.map((store) => STORE_NAMES[store]).join(joiner);
-const ownedLabel = (stores: Store[]) => `Owned on ${names(stores)}`;
-const wishLabel = (stores: Store[]) => `On your ${names(stores)} ${stores.length > 1 ? 'wishlists' : 'wishlist'}`;
 const where = (games: PackGame[]) => games.map((game) => `${game.title} (${names(game.stores, ', ')})`);
 const storesOf = (games: PackGame[]) => STORES.filter((store) => games.some((game) => game.stores.includes(store)));
 

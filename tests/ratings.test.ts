@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
-import { beforeEach, describe, expect, it } from 'vitest';
-import { createSteamBadge } from '../lib/badge';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createPackBadge, createSteamBadge } from '../lib/badge';
 import { markRatedBadges, tileShowsSteamRating, unratedSteamRefs, type RatingLookup } from '../lib/ratings';
 import type { SteamRating } from '../lib/steam-ratings';
 
@@ -83,6 +83,50 @@ describe('markRatedBadges', () => {
     el.append(createSteamBadge(document, { name: 'Unknown', steam: null }));
     document.body.append(el);
     expect(unratedSteamRefs(document)).toEqual([]);
+  });
+});
+
+describe('ratings for packs', () => {
+  const packBadge = () => {
+    const el = document.createElement('div');
+    el.className = 'tile';
+    const badge = createPackBadge(document, [
+      { name: 'AMID EVIL', steam: { type: 'app', id: 673130 } },
+      { name: 'Unreviewed', steam: { type: 'app', id: 3284450 } },
+      { name: 'Not on Steam', steam: null },
+    ]);
+    el.append(badge);
+    document.body.append(el);
+    return badge;
+  };
+
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it("asks about the pack's games, and keeps their ratings once all are answered", () => {
+    const badge = packBadge();
+    expect(unratedSteamRefs(document)).toEqual(['app/673130', 'app/3284450']);
+    markRatedBadges(document, (ref) => (ref === 'app/3284450' ? undefined : lookup(ref)), '.tile');
+    expect(badge.hasAttribute('data-bsl-pack-ratings')).toBe(false);
+    markRatedBadges(document, lookup, '.tile');
+    expect(JSON.parse(badge.getAttribute('data-bsl-pack-ratings')!)).toEqual([ratings['app/673130'], null, null]);
+    expect(unratedSteamRefs(document)).toEqual([]);
+  });
+
+  it('shows each rating in the tooltip on hover', () => {
+    vi.useFakeTimers();
+    try {
+      const badge = packBadge();
+      markRatedBadges(document, lookup, '.tile');
+      badge.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+      vi.runAllTimers();
+      const rows = [...document.querySelectorAll('.bsl-tip .bsl-pack-row')].map((row) => row.textContent);
+      expect(rows).toEqual(['AMID EVIL93%', 'Unreviewed', 'Not on Steam']);
+      expect(document.querySelector('.bsl-tip strong')?.textContent).toBe('Pack of 3');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 
