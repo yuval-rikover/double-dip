@@ -1,8 +1,6 @@
 import { BADGE_ATTR, createSteamBadge } from './badge';
 import type { SteamLookup } from './title-site';
 
-/** A game's tile, or its details panel: where the badge sits. */
-export const HUMBLE_TILE_SELECTOR = '.tier-item-view, .tier-item-details-view';
 /** Game tiles in the bundle's tier grid. */
 const TILE_TITLE_SELECTOR = '.tier-item-view .item-title';
 /** The heading of each game's details panel (the carousel opened by a tile). */

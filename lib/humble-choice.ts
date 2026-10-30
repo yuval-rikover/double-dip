@@ -17,7 +17,7 @@ const MONTH_SLUG = new RegExp(`^(${MONTHS.join('|')})-(\\d{4})$`);
 const MONTH_HEADING = new RegExp(`^(${MONTHS.join('|')}) (\\d{4}) games$`, 'i');
 
 /** Game tiles in a Choice month's grid, and the element that holds each tile's image. */
-export const CHOICE_TILE_SELECTOR = '.content-choice';
+const CHOICE_TILE_SELECTOR = '.content-choice';
 const TILE_TITLE_SELECTOR = '.content-choice-title';
 const TILE_IMAGE_SELECTOR = '.choice-image-container';
 

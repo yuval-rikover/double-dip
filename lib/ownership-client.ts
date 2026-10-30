@@ -13,6 +13,9 @@ import type { SteamRating } from './steam-ratings';
 
 /** Badges arriving within this window go to the background as one question. */
 const BATCH_WINDOW_MS = 60;
+/** After a failed question, wait this long before asking again, a bit longer each time. */
+const RETRY_MS = 2000;
+const MAX_RETRIES = 4;
 
 /** Asks the background to start loading the libraries while the page renders. */
 export function warmLibraries(): void {
@@ -44,7 +47,7 @@ export function createOwnershipMarker(): () => void {
         Object.entries(response.owned).map(([ref, owned]) => [ref, { owned, wishlisted: response.wishlisted?.[ref] }]),
       );
     },
-    // Unanswered ids (background failure) count as not owned.
+    // Ids missing from an answer count as not owned.
     fallback: { owned: [] },
   });
   const libraryKeys = new Set<string>(Object.values(LIBRARY_KEYS));
@@ -62,13 +65,10 @@ export function createOwnershipMarker(): () => void {
   return decorator.decorate;
 }
 
-/**
- * Like `createOwnershipMarker`, for Steam ratings in the badges. `tileSelector`
- * matches the site's game tiles, to spot tiles that already show the rating.
- */
-export function createRatingMarker(tileSelector: string): () => void {
+/** Like `createOwnershipMarker`, for Steam ratings in the badges. */
+export function createRatingMarker(): () => void {
   return createBadgeDecorator<SteamRating | null>({
-    mark: (lookup) => markRatedBadges(document, lookup, tileSelector),
+    mark: (lookup) => markRatedBadges(document, lookup),
     unchecked: () => unratedSteamRefs(document),
     ask: async (steamRefs) => {
       const message: GetSteamRatingsMessage = { type: 'getSteamRatings', steamRefs };
@@ -78,42 +78,55 @@ export function createRatingMarker(tileSelector: string): () => void {
   }).decorate;
 }
 
-interface BadgeDecorator<T> {
+export interface BadgeDecorator<T> {
   /** Decorates the badges `lookup` can answer for. */
   mark(lookup: (steamRef: string) => T | undefined): void;
   /** Removes the decorations, for `reask`. */
   clear?(): void;
   /** Steam ids of the badges not decorated yet. */
   unchecked(): string[];
+  /** Undefined, or a rejection, when the background failed: the ids are asked again later. */
   ask(steamRefs: string[]): Promise<Record<string, T> | undefined>;
-  /** The answer for ids the background didn't answer. */
+  /** The answer for ids missing from an answer. */
   fallback: T;
 }
 
 /**
  * Each Steam id is asked about once, and ids badged in quick succession are
  * batched into one question (each costs the background a network call or a
- * few). `reask` asks again about every id so far and redoes the decorations
+ * few). A question the background fails to answer (it was restarting, say)
+ * is asked again a few times, rather than its ids being left unanswered.
+ * `reask` asks again about every id so far and redoes the decorations
  * once the answers are in, so they don't flicker off while waiting.
  */
-function createBadgeDecorator<T>(decorator: BadgeDecorator<T>): { decorate: () => void; reask: () => void } {
+export function createBadgeDecorator<T>(decorator: BadgeDecorator<T>): { decorate: () => void; reask: () => void } {
   const answers = new Map<string, T>();
   const requested = new Set<string>();
   let batch: string[] = [];
   let timer: ReturnType<typeof setTimeout> | undefined;
   const mark = () => decorator.mark((ref) => answers.get(ref));
 
+  // Out of tries, the ids are left unanswered, not marked: the next round of
+  // badges asks about them again, and so does a script injected after an
+  // extension reload, since they aren't marked checked.
+  const ask = (refs: string[], retries = 0): void => {
+    const failed = (error?: unknown) => {
+      if (error) console.warn('[Double Dip]', error);
+      if (retries < MAX_RETRIES) setTimeout(() => ask(refs, retries + 1), RETRY_MS * (retries + 1));
+      else refs.forEach((ref) => requested.delete(ref));
+    };
+    decorator.ask(refs).then((response) => {
+      if (!response) return failed();
+      for (const ref of refs) answers.set(ref, response[ref] ?? decorator.fallback);
+      mark();
+    }, failed);
+  };
+
   const flush = () => {
     const refs = batch;
     batch = [];
     timer = undefined;
-    decorator
-      .ask(refs)
-      .then((response) => {
-        for (const ref of refs) answers.set(ref, response?.[ref] ?? decorator.fallback);
-        mark();
-      })
-      .catch((error) => console.warn('[Double Dip]', error));
+    ask(refs);
   };
 
   const decorate = () => {
@@ -134,8 +147,9 @@ function createBadgeDecorator<T>(decorator: BadgeDecorator<T>): { decorate: () =
     decorator
       .ask(refs)
       .then((response) => {
-        if (thisRound !== reasking) return;
-        for (const ref of refs) answers.set(ref, response?.[ref] ?? decorator.fallback);
+        // Failed: the current markers stay, rather than all turning "not owned".
+        if (thisRound !== reasking || !response) return;
+        for (const ref of refs) answers.set(ref, response[ref] ?? decorator.fallback);
         decorator.clear?.();
         mark();
       })

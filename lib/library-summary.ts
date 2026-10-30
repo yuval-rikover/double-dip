@@ -70,8 +70,9 @@ export function formatAge(fetchedAt: number, now: number): string {
 export function describeLibrary(summary: LibrarySummary, now: number): string {
   switch (summary.status) {
     case 'ok':
+      // Only Epic keeps a library on sign-out: its session expires on its own.
       if (summary.signedOut) {
-        return `Signed out · showing ${summary.count.toLocaleString('en-US')} items from ${formatAge(summary.fetchedAt, now)}`;
+        return `Session expired · showing ${summary.count.toLocaleString('en-US')} items from ${formatAge(summary.fetchedAt, now)}`;
       }
       return `${summary.count.toLocaleString('en-US')} items · updated ${formatAge(summary.fetchedAt, now)}`;
     case 'signed-out':

@@ -76,7 +76,9 @@ function storeRow(store: Store, summary: LibrarySummary): HTMLLIElement {
     link.href = SIGN_IN_URLS[store];
     link.target = '_blank';
     link.rel = 'noopener';
-    link.textContent = `Sign in to ${STORE_NAMES[store]} ↗`;
+    // An expired session usually renews on just opening the store's site.
+    const expired = summary.status === 'ok';
+    link.textContent = expired ? `Open ${STORE_NAMES[store]} to reconnect ↗` : `Sign in to ${STORE_NAMES[store]} ↗`;
     row.append(link);
   }
   return row;

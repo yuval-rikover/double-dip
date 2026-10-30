@@ -2,7 +2,6 @@ import '../lib/badge.css';
 import '../lib/humble-choice.css';
 import {
   annotateChoice,
-  CHOICE_TILE_SELECTOR,
   choiceMonthSlug,
   choiceMonthUrl,
   collectChoiceTitles,
@@ -44,7 +43,7 @@ export default defineContentScript({
   main(ctx) {
     warmLibraries();
     const markOwned = createOwnershipMarker();
-    const markRatings = createRatingMarker(CHOICE_TILE_SELECTOR);
+    const markRatings = createRatingMarker();
     let month: ChoiceMonth | null = null;
     let slugRequested: string | null = null;
     // Used only if the month's data can't be loaded: look titles up on Steam.

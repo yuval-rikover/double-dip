@@ -125,8 +125,8 @@ describe('annotateFanaticalCards', () => {
     expect(button.getAttribute('aria-expanded')).toBe('true');
     const links = [...document.querySelectorAll<HTMLAnchorElement>('.bsl-menu a')];
     expect(links.map((link) => [link.textContent, link.href])).toEqual([
-      ['AMID EVIL ↗', 'https://store.steampowered.com/app/673130/'],
-      ['DUSK ↗ search', 'https://store.steampowered.com/search/?term=DUSK'],
+      ['AMID EVIL\u00a0↗', 'https://store.steampowered.com/app/673130/'],
+      ['DUSK\u00a0↗ search', 'https://store.steampowered.com/search/?term=DUSK'],
     ]);
 
     // A second click closes it, and so does a click elsewhere.
@@ -144,7 +144,7 @@ describe('annotateFanaticalCards', () => {
     const button = onlyBadge();
     // From the keyboard: focus moves into the menu.
     button.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }));
-    expect(document.activeElement?.textContent).toBe('AMID EVIL ↗');
+    expect(document.activeElement?.textContent).toBe('AMID EVIL\u00a0↗');
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(document.querySelector('.bsl-menu')).toBeNull();
     expect(document.activeElement).toBe(button);

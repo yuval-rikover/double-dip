@@ -23,7 +23,7 @@ line breaks.
 Thinking about a Humble Bundle, a Humble Choice month, a Fanatical or a Green Man Gaming bundle? See at a glance which games you already own, and jump to any game's Steam page.
 
 On every bundle page, each game gets:
-• A "Steam ↗" link to its Steam store page, with the game's Steam rating ("Steam 93% ↗") when the bundle page doesn't already show it.
+• A "Steam ↗" link to its Steam store page, with the game's Steam rating and review count ("Steam 93% 👤6.7K ↗").
 • A "✓ Owned" marker if it's already in your library, naming where: Steam, GOG and/or Epic Games Store.
 • A "♥ Wishlisted" marker if you don't own it but it's on your Steam or GOG wishlist.
 • For multi-game packs on Fanatical: how many of the games you own ("2/3"), and each game's Steam rating and Steam link from the pack's "3 games ▾" label.
@@ -96,7 +96,7 @@ about half size, so each one is a few real tiles, zoomed in, under a headline.
 | File | Size | Caption |
 |---|---|---|
 | `1-owned.png` | 1280×800 | See which games you already own, on Steam, GOG or Epic. |
-| `2-ratings.png` | 1280×800 | The Steam rating of every game; hover for the review count. |
+| `2-ratings.png` | 1280×800 | The Steam rating of every game, and how many reviewed it. |
 | `3-packs.png` | 1280×800 | Fanatical packs show how many of the games you own. |
 | `4-wishlist.png` | 1280×800 | Games on your Steam or GOG wishlist get a heart. |
 | `5-popup.png` | 1280×800 | Uses the sign-ins you already have; the popup shows each library. |

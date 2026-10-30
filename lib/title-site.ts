@@ -12,8 +12,6 @@ export interface TitleSite {
   collectTitles(doc: Document): string[];
   /** Adds badges for the titles `lookup` can answer; must skip tiles already badged. */
   annotate(doc: Document, lookup: SteamLookup): void;
-  /** Matches a badge's tile, to spot tiles already showing the Steam rating. */
-  tileSelector: string;
 }
 
 /**
@@ -28,7 +26,7 @@ export function runTitleSite(ctx: ContentScriptContext, site: TitleSite): void {
   const resolved = new Map<string, SteamRef | null>();
   const requested = new Set<string>();
   const markOwned = createOwnershipMarker();
-  const markRatings = createRatingMarker(site.tileSelector);
+  const markRatings = createRatingMarker();
   const annotate = () => {
     site.annotate(document, (title) => resolved.get(title));
     markOwned();

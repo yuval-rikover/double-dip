@@ -85,6 +85,23 @@ li > .bsl-owned--inline > * {
   opacity: 0.55;
 }
 
+/* How many reviews, after the percentage: quieter than it. */
+.bsl-rating-count {
+  font-weight: 400;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+/* The person icon before the count. Resets what sites set on every svg. */
+.bsl-rating-count__icon {
+  display: inline !important;
+  width: 0.8em !important;
+  height: 0.8em !important;
+  margin: 0 2px 0 0 !important;
+  vertical-align: -0.05em;
+  fill: currentColor;
+}
+
 /* The tooltip, on <body>. Resets what sites set on every div. */
 .bsl-tip {
   position: fixed !important;
@@ -163,16 +180,22 @@ li > .bsl-owned--inline > * {
   margin-left: auto;
 }
 
-/* Wide enough for most titles on one line. */
+/* Wide enough for most titles on one line, beside the rating columns;
+   never wider than the window. */
 .bsl-menu,
 .bsl-tip:has(.bsl-pack-row) {
-  max-width: 380px;
+  max-width: min(460px, calc(100vw - 16px));
 }
 
 /* Right-aligned, and as wide as "100%", so the percentages form a column. */
 .bsl-pack-row__rating {
   min-width: 4ch;
   text-align: right;
+}
+
+/* Left-aligned and as wide as the widest count, so the icons form a column. */
+.bsl-pack-row__count {
+  min-width: 5ch;
 }
 
 /* The link searches Steam for the title; in the tooltip, the click hint. */

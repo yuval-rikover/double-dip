@@ -67,6 +67,20 @@ describe('getGogLibrary', () => {
     });
   });
 
+  it('keeps the last wishlist when only the wishlist request fails', async () => {
+    const json = (body: unknown) => new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } });
+    const failing = (async (url: RequestInfo | URL) =>
+      String(url).endsWith('/user/wishlist.json') ? new Response('', { status: 500 }) : json({ owned: [1, 2] })) as typeof fetch;
+    const store = memoryStore({ owned: [1], wishlist: [7], fetchedAt: NOW - DAY });
+    expect(await getGogLibrary({ fetch: failing, store, now: () => NOW })).toEqual({
+      status: 'ok',
+      owned: [1, 2],
+      wishlist: [7],
+      fetchedAt: NOW,
+    });
+    expect(store.value?.wishlist).toEqual([7]);
+  });
+
   it('reads the login-page redirect as signed out', async () => {
     const fetchFn = (async () =>
       new Response('<!DOCTYPE html><html>Redirecting to /en##openlogin</html>', {

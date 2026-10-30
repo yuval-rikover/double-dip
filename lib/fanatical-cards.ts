@@ -8,8 +8,6 @@ import type { SteamLookup } from './title-site';
  * bundles, `article.PickAndMixCard` (h2) on build-your-own bundles.
  */
 const CARD_NAME_SELECTOR = 'article.faux-block-link .card-product-name';
-/** A badge's tile: a game card, or a game in a pack's list. */
-export const FANATICAL_TILE_SELECTOR = 'article, li';
 /** The game list in a pack's details view ("This bundle includes:"). */
 const PACK_LIST_ITEM_SELECTOR = '.info-container li';
 

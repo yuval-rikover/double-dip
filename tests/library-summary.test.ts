@@ -53,7 +53,7 @@ describe('describeLibrary', () => {
     expect(describeLibrary({ status: 'ok', count: 2887, fetchedAt: NOW - 5 * MIN }, NOW)).toBe('2,887 items · updated 5 min ago');
     expect(describeLibrary({ status: 'signed-out' }, NOW)).toBe('Signed out in this browser');
     expect(describeLibrary({ status: 'ok', count: 1234, fetchedAt: NOW - 180 * MIN, signedOut: true }, NOW)).toBe(
-      'Signed out · showing 1,234 items from 3 h ago',
+      'Session expired · showing 1,234 items from 3 h ago',
     );
     expect(describeLibrary({ status: 'error', message: 'GOG games returned 503' }, NOW)).toBe(
       "Couldn't load: GOG games returned 503",

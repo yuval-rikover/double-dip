@@ -5,7 +5,7 @@ import type { SteamLookup } from './title-site';
  * Game tiles on a Green Man Gaming bundle page. The bonus coupon is also a
  * `.bundle-item`, but a div without a `.game-title`, so it's never matched.
  */
-export const GMG_TILE_SELECTOR = 'figure.bundle-item';
+const GMG_TILE_SELECTOR = 'figure.bundle-item';
 const TILE_TITLE_SELECTOR = '.game-title';
 const TILE_IMAGE_SELECTOR = '.image';
 

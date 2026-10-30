@@ -3,8 +3,8 @@
 A Chrome and Firefox extension for game bundle pages. Next to each game it
 shows:
 
-- **A Steam link with the game's rating**: "Steam 93% ↗". The rating is left
-  out where the page already shows it.
+- **A Steam link with the game's rating**: "Steam 93% 👤6.7K ↗", the share of
+  positive Steam reviews and how many there are.
 - **Where you already own it**: "✓ Steam GOG", from your Steam, GOG and Epic
   Games Store libraries.
 - **Or that it's on your wishlist**: "♥ Wishlisted", from your Steam and GOG

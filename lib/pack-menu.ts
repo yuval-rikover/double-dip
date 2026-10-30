@@ -1,7 +1,7 @@
 import type { GameStores } from './owned';
 import { ownedLabel, STORE_NAMES, wishLabel } from './ownership';
 import { packEntries, packRatings, packStores } from './pack-data';
-import { ratingPercent, reviewsText } from './rating-label';
+import { ratingPercent, reviewCount, reviewsText } from './rating-label';
 import { parseSteamRef, steamSearchUrl, steamStoreUrl } from './steam';
 import { hideTip, place } from './tooltip';
 
@@ -33,7 +33,7 @@ function storesMark(doc: Document, { owned, wishlisted }: GameStores): HTMLEleme
 
 /**
  * One row per game in a pack: its title, then where it's owned or
- * wishlisted and its Steam rating, once those are known. As links to Steam for the
+ * wishlisted and its Steam rating and review count, once those are known. As links to Steam for the
  * menu (a Steam search for games without a Steam id), plain for the tooltip.
  */
 function packRows(doc: Document, pack: Element, links: boolean): HTMLElement[] {
@@ -44,7 +44,8 @@ function packRows(doc: Document, pack: Element, links: boolean): HTMLElement[] {
     const row = doc.createElement(links ? 'a' : 'div');
     row.className = 'bsl-pack-row';
     const name = doc.createElement('span');
-    name.textContent = links ? `${title} ↗` : title;
+    // A no-break space keeps the arrow on the title's last line.
+    name.textContent = links ? `${title}\u00a0↗` : title;
     row.append(name);
     if (links && !steam) {
       const note = doc.createElement('span');
@@ -54,14 +55,19 @@ function packRows(doc: Document, pack: Element, links: boolean): HTMLElement[] {
     }
     const end = doc.createElement('span');
     end.className = 'bsl-pack-row__end';
-    // The rating last, in a column of its own, so the percentages line up.
+    // The rating and review count last, in columns of their own, so they line up.
     const mark = stores?.[i] && storesMark(doc, stores[i]);
     if (mark) end.append(mark);
     const rating = ratings?.[i];
     const percent = doc.createElement('span');
     percent.className = 'bsl-pack-row__rating';
-    if (rating) percent.append(ratingPercent(doc, rating));
-    if (ratings?.some(Boolean)) end.append(percent);
+    const count = doc.createElement('span');
+    count.className = 'bsl-pack-row__count';
+    if (rating) {
+      percent.append(ratingPercent(doc, rating));
+      count.append(reviewCount(doc, rating));
+    }
+    if (ratings?.some(Boolean)) end.append(percent, count);
     if (end.childElementCount > 0) row.append(end);
     if (links) {
       const link = row as HTMLAnchorElement;
