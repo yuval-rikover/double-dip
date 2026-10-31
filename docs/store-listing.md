@@ -90,14 +90,15 @@ Build steps for reviewers: see README → Develop (`npm ci && npm run build:fire
 ## Screenshots
 
 Generated locally into `store-assets/` (git-ignored: the bundle shots show
-third-party game art). All are 24-bit PNG, no alpha. The stores show them at
-about half size, so each one is a few real tiles, zoomed in, under a headline.
+third-party game art). All are 24-bit PNG, no alpha. The Chrome Web Store
+shows them at 640×400, even when opened, so each one is two real cards
+enlarged 2× on the page (sharp, not upscaled) under a one-line headline.
 
 | File | Size | Caption |
 |---|---|---|
 | `1-owned.png` | 1280×800 | See which games you already own, on Steam, GOG or Epic. |
 | `2-ratings.png` | 1280×800 | The Steam rating of every game, and how many reviewed it. |
-| `3-packs.png` | 1280×800 | Fanatical packs show how many of the games you own. |
+| `3-packs.png` | 1280×800 | Packs show how many games you own, and each one's rating. |
 | `4-wishlist.png` | 1280×800 | Games on your Steam or GOG wishlist get a heart. |
 | `5-popup.png` | 1280×800 | Uses the sign-ins you already have; the popup shows each library. |
 | `promo-tile-440x280.png` | 440×280 | Chrome small promo tile. |

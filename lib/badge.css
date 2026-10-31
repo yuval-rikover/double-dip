@@ -234,6 +234,12 @@ li > .bsl-owned--inline > * {
   cursor: default;
 }
 
+/* Below Fanatical's own ribbon ("In Steam Library", "New To Bundle") where it
+   would cover our row: set by clearFanaticalRibbons. */
+[data-bsl-below-ribbon] {
+  top: 31px !important;
+}
+
 .bsl-owned.bsl-owned--inline {
   position: static !important;
   display: inline-flex;

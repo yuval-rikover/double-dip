@@ -29,8 +29,9 @@ browser.
     they're read.
 
 The extension never sees or stores your passwords. If you're signed out of a
-store in this browser, that store is skipped. Epic is the exception: its
-sign-in usually ends when the browser closes, so the last Epic library read
+store in this browser, that store is skipped. Steam and Epic are the
+exception: their sessions lapse on their own (Epic's when the browser closes,
+Steam's until a Steam page is opened), so the last library read from them
 stays in use while you're signed out, and the popup says so. Removing the
 extension deletes it.
 

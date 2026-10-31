@@ -40,11 +40,39 @@ describe('getSteamLibrary', () => {
     expect(store.value).toEqual({ apps: [18500, 225260], packages: [25920], wishlist: [1], fetchedAt: NOW });
   });
 
-  it('reports signed out on empty lists, and drops the cached library', async () => {
-    const store = memoryStore({ apps: [1], packages: [], fetchedAt: NOW - 2 * HOUR });
+  it('reports signed out on empty lists when nothing is cached', async () => {
+    const store = memoryStore();
     const { fn } = fakeFetch({ rgOwnedApps: [], rgOwnedPackages: [] });
     expect(await getSteamLibrary({ fetch: fn, store, now: () => NOW })).toEqual({ status: 'signed-out' });
     expect(store.value).toBeUndefined();
+  });
+
+  it('keeps the cached library, marked signed out, when the session lapses', async () => {
+    const store = memoryStore({ apps: [1], packages: [], wishlist: [2], fetchedAt: NOW - 2 * HOUR });
+    const { fn } = fakeFetch({ rgOwnedApps: [], rgOwnedPackages: [] });
+    expect(await getSteamLibrary({ fetch: fn, store, now: () => NOW })).toEqual({
+      status: 'ok',
+      apps: [1],
+      packages: [],
+      wishlist: [2],
+      fetchedAt: NOW - 2 * HOUR,
+      signedOut: true,
+    });
+    expect(store.value?.signedOut).toBe(true);
+  });
+
+  it('asks Steam again while signed out, and clears the mark once it answers', async () => {
+    const store = memoryStore({ apps: [1], packages: [], fetchedAt: NOW - 1000, signedOut: true });
+    const { fn, calls } = fakeFetch({ rgOwnedApps: [1, 3], rgOwnedPackages: [] });
+    expect(await getSteamLibrary({ fetch: fn, store, now: () => NOW })).toEqual({
+      status: 'ok',
+      apps: [1, 3],
+      packages: [],
+      wishlist: [],
+      fetchedAt: NOW,
+    });
+    expect(calls).toHaveLength(1);
+    expect(store.value?.signedOut).toBeUndefined();
   });
 
   it('serves the cache for an hour without calling Steam', async () => {

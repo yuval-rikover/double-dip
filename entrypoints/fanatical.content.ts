@@ -1,6 +1,6 @@
 import '../lib/badge.css';
 import { extractBundleGames, fanaticalApiPath, parseFanaticalPath, type BundleGame } from '../lib/fanatical';
-import { annotateFanaticalCards, annotateFanaticalPackLists } from '../lib/fanatical-cards';
+import { annotateFanaticalCards, annotateFanaticalPackLists, clearFanaticalRibbons } from '../lib/fanatical-cards';
 import type { ResolveSteamTitlesMessage, ResolveSteamTitlesResponse } from '../lib/messages';
 import { createOwnershipMarker, createRatingMarker, warmLibraries } from '../lib/ownership-client';
 import type { SteamRef } from '../lib/steam';
@@ -25,6 +25,9 @@ export default defineContentScript({
       if (!games) {
         games = fetch(new URL(apiPath, location.origin), { headers: { Accept: 'application/json' } })
           .then((response) => {
+            // The bundle is gone (Fanatical's own page says "Page not found"):
+            // nothing to annotate, and nothing worth logging.
+            if (response.status === 404) return {};
             if (!response.ok) throw new Error(`${apiPath} returned ${response.status}`);
             return response.json();
           })
@@ -62,12 +65,13 @@ export default defineContentScript({
 
       loadGames(fanaticalApiPath(page))
         .then((games) => {
-          if (thisRun !== runId || ctx.isInvalid) return;
+          if (thisRun !== runId || ctx.isInvalid || !games.length) return;
           annotate = () => {
             annotateFanaticalCards(document, games, lookup);
             annotateFanaticalPackLists(document, games, lookup);
             markOwned();
             markRatings();
+            clearFanaticalRibbons(document);
           };
           annotate();
           const request = (titles: string[]) => {

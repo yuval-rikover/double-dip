@@ -10,6 +10,12 @@ import type { SteamLookup } from './title-site';
 const CARD_NAME_SELECTOR = 'article.faux-block-link .card-product-name';
 /** The game list in a pack's details view ("This bundle includes:"). */
 const PACK_LIST_ITEM_SELECTOR = '.info-container li';
+/** Fanatical's own ribbon on a card's top-left corner ("New To Bundle"). */
+const RIBBON_SELECTOR = ':scope > .card-label';
+/** On our badge and marker: drop below the ribbon (see badge.css). */
+const BELOW_RIBBON_ATTR = 'data-bsl-below-ribbon';
+/** Space kept between the ribbon's end and the Steam badge. */
+const RIBBON_GAP = 4;
 
 /**
  * Adds a badge to every game card that doesn't have one yet: a Steam link,
@@ -66,4 +72,25 @@ export function annotateFanaticalPackLists(doc: Document, games: BundleGame[], l
     added++;
   }
   return added;
+}
+
+/**
+ * Drops a card's row of badges below Fanatical's ribbon where the ribbon would
+ * cover it: always when there's an owned marker, which sits in the ribbon's
+ * corner, and otherwise only when the ribbon reaches the Steam badge. The
+ * whole row moves together, so it stays on one line. Run after the markers
+ * are added: a marker or a longer badge can change the answer.
+ */
+export function clearFanaticalRibbons(doc: Document): void {
+  for (const card of doc.querySelectorAll<HTMLElement>('article.faux-block-link')) {
+    const badge = card.querySelector<HTMLElement>(`:scope > [${BADGE_ATTR}]`);
+    if (!badge) continue;
+    const marker = card.querySelector<HTMLElement>(':scope > .bsl-owned');
+    const ribbon = card.querySelector(RIBBON_SELECTOR);
+    // Left edges only: moving the row down doesn't change them.
+    const below =
+      !!ribbon &&
+      (!!marker || badge.getBoundingClientRect().left < ribbon.getBoundingClientRect().right + RIBBON_GAP);
+    for (const element of [badge, marker]) element?.toggleAttribute(BELOW_RIBBON_ATTR, below);
+  }
 }

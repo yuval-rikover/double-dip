@@ -7,6 +7,8 @@ export interface OwnedSteam {
   /** Missing from libraries cached before wishlists were read. */
   wishlist?: number[];
   fetchedAt: number;
+  /** Kept from before the session lapsed: see getSteamLibrary. */
+  signedOut?: boolean;
 }
 
 export type SteamLibrary = LibraryResult<OwnedSteam>;
@@ -24,6 +26,10 @@ const USERDATA_URL = 'https://store.steampowered.com/dynamicstore/userdata/';
  * Steam store makes to mark owned games). A signed-out session answers with
  * empty lists, so "owns nothing" reads as signed out. The same answer has the
  * wishlist.
+ *
+ * A signed-in session answers the same way once its short-lived token lapses:
+ * Steam renews it only when a Steam page is opened. So a signed-out answer
+ * keeps the last library (marked `signedOut`) rather than dropping it.
  */
 export function getSteamLibrary(deps: LibraryDeps, opts: { force?: boolean } = {}): Promise<SteamLibrary> {
   const now = (deps.now ?? Date.now)();
@@ -41,6 +47,6 @@ export function getSteamLibrary(deps: LibraryDeps, opts: { force?: boolean } = {
       if (apps.length === 0 && packages.length === 0) return 'signed-out';
       return { apps, packages, wishlist: numbers(data.rgWishlist) ?? [], fetchedAt: now };
     },
-    opts,
+    { ...opts, keepWhenSignedOut: true },
   );
 }

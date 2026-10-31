@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { BundleGame } from '../lib/fanatical';
-import { annotateFanaticalCards, annotateFanaticalPackLists } from '../lib/fanatical-cards';
+import { annotateFanaticalCards, annotateFanaticalPackLists, clearFanaticalRibbons } from '../lib/fanatical-cards';
 import type { SteamLookup } from '../lib/title-site';
 
 const games: BundleGame[] = [
@@ -174,5 +174,69 @@ describe('annotateFanaticalPackLists', () => {
     expect(annotateFanaticalPackLists(document, games, (title) => (title === 'AMID EVIL' ? undefined : null))).toBe(0);
     expect(annotateFanaticalPackLists(document, games, packLookup)).toBe(1);
     expect(annotateFanaticalPackLists(document, games, packLookup)).toBe(0);
+  });
+});
+
+describe('clearFanaticalRibbons', () => {
+  /** A card with our badge at `badgeLeft`, and optionally a ribbon and an owned marker. */
+  function ribbonCard(opts: { ribbonRight?: number; badgeLeft: number; marker?: boolean }): HTMLElement {
+    const article = document.createElement('article');
+    article.className = 'PickAndMixCard faux-block-link';
+    const rect = (left: number, right: number) => () => ({ left, right, top: 0, bottom: 20 }) as DOMRect;
+    if (opts.ribbonRight !== undefined) {
+      const ribbon = document.createElement('div');
+      ribbon.className = 'card-label';
+      ribbon.getBoundingClientRect = rect(-5, opts.ribbonRight);
+      article.append(ribbon);
+    }
+    const badge = document.createElement('a');
+    badge.setAttribute('data-bsl-badge', '');
+    badge.getBoundingClientRect = rect(opts.badgeLeft, 261);
+    article.append(badge);
+    if (opts.marker) {
+      const marker = document.createElement('span');
+      marker.className = 'bsl-owned';
+      article.append(marker);
+    }
+    document.body.append(article);
+    return article;
+  }
+  const moved = (card: HTMLElement) =>
+    [...card.querySelectorAll('[data-bsl-badge], .bsl-owned')].map((e) => e.hasAttribute('data-bsl-below-ribbon'));
+
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('leaves the row in place when the ribbon ends before the badge', () => {
+    const card = ribbonCard({ ribbonRight: 119, badgeLeft: 130 });
+    clearFanaticalRibbons(document);
+    expect(moved(card)).toEqual([false]);
+  });
+
+  it('moves the badge down when the ribbon reaches it', () => {
+    const card = ribbonCard({ ribbonRight: 173, badgeLeft: 125 });
+    clearFanaticalRibbons(document);
+    expect(moved(card)).toEqual([true]);
+  });
+
+  it('moves the whole row down when there is an owned marker under the ribbon', () => {
+    const card = ribbonCard({ ribbonRight: 119, badgeLeft: 186, marker: true });
+    clearFanaticalRibbons(document);
+    expect(moved(card)).toEqual([true, true]);
+  });
+
+  it('leaves cards without a ribbon alone', () => {
+    const card = ribbonCard({ badgeLeft: 125, marker: true });
+    clearFanaticalRibbons(document);
+    expect(moved(card)).toEqual([false, false]);
+  });
+
+  it('moves the row back up once the ribbon is gone', () => {
+    const card = ribbonCard({ ribbonRight: 119, badgeLeft: 186, marker: true });
+    clearFanaticalRibbons(document);
+    card.querySelector('.card-label')!.remove();
+    clearFanaticalRibbons(document);
+    expect(moved(card)).toEqual([false, false]);
   });
 });

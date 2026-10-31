@@ -15,6 +15,9 @@ const SIGN_IN_URLS: Record<Store, string> = {
   epic: 'https://www.epicgames.com/id/login',
 };
 
+/** Where an expired session renews: Steam's on any store page. */
+const RECONNECT_URLS: Record<Store, string> = { ...SIGN_IN_URLS, steam: 'https://store.steampowered.com/' };
+
 const storesList = document.querySelector<HTMLUListElement>('#stores')!;
 const refreshButton = document.querySelector<HTMLButtonElement>('#refresh')!;
 const access = document.querySelector<HTMLElement>('#access')!;
@@ -72,12 +75,12 @@ function storeRow(store: Store, summary: LibrarySummary): HTMLLIElement {
   detail.textContent = describeLibrary(summary, Date.now());
   row.append(name, detail);
   if (signedOut) {
-    const link = document.createElement('a');
-    link.href = SIGN_IN_URLS[store];
-    link.target = '_blank';
-    link.rel = 'noopener';
     // An expired session usually renews on just opening the store's site.
     const expired = summary.status === 'ok';
+    const link = document.createElement('a');
+    link.href = expired ? RECONNECT_URLS[store] : SIGN_IN_URLS[store];
+    link.target = '_blank';
+    link.rel = 'noopener';
     link.textContent = expired ? `Open ${STORE_NAMES[store]} to reconnect ↗` : `Sign in to ${STORE_NAMES[store]} ↗`;
     row.append(link);
   }
