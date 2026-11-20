@@ -9,7 +9,7 @@ import { getOwnership } from '../lib/ownership';
 import { steamRefsToShopIds, type CachedShopIds } from '../lib/shop-map';
 import { getSteamLibrary, type OwnedSteam } from '../lib/steam-library';
 import { getSteamRatings, type CachedRating } from '../lib/steam-ratings';
-import { resolveSteamTitles, SEARCH_CONCURRENCY, type CachedRef } from '../lib/steam-resolve';
+import { OLD_CACHE_PREFIX, resolveSteamTitles, SEARCH_CONCURRENCY, type CachedRef } from '../lib/steam-resolve';
 
 function keyValueCache<V>(): KeyValueCache<V> {
   return {
@@ -85,6 +85,17 @@ function handle(message: ExtensionMessage): Promise<unknown> {
 }
 
 export default defineBackground(() => {
+  // Caches from 0.1.5 and before that nothing reads any more: Humble Choice
+  // months (Humble stopped listing Steam ids), and title lookups that could
+  // hold a package where there is now its game.
+  browser.runtime.onInstalled.addListener(async ({ reason }) => {
+    if (reason !== 'update') return;
+    const stale = Object.keys(await browser.storage.local.get(null)).filter(
+      (key) => key.startsWith('choice-month:') || key.startsWith(OLD_CACHE_PREFIX),
+    );
+    if (stale.length) await browser.storage.local.remove(stale);
+  });
+
   // Network calls run here, not in content scripts: the stores' APIs send no
   // CORS headers, and only the background has the host permissions (and the
   // user's store cookies) to call them.

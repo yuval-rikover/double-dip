@@ -2,6 +2,7 @@ import '../lib/badge.css';
 import { extractBundleGames, fanaticalApiPath, parseFanaticalPath, type BundleGame } from '../lib/fanatical';
 import { annotateFanaticalCards, annotateFanaticalPackLists, clearFanaticalRibbons } from '../lib/fanatical-cards';
 import type { ResolveSteamTitlesMessage, ResolveSteamTitlesResponse } from '../lib/messages';
+import { stackCrowdedMarkers } from '../lib/owned';
 import { createOwnershipMarker, createRatingMarker, warmLibraries } from '../lib/ownership-client';
 import type { SteamRef } from '../lib/steam';
 
@@ -72,6 +73,7 @@ export default defineContentScript({
             markOwned();
             markRatings();
             clearFanaticalRibbons(document);
+            stackCrowdedMarkers(document);
           };
           annotate();
           const request = (titles: string[]) => {
@@ -100,6 +102,8 @@ export default defineContentScript({
     // Use the event's URL, not `location`: with the Navigation API, WXT fires
     // this before the new URL commits, so `location` still shows the old page.
     ctx.addEventListener(window, 'wxt:locationchange', (event) => run(event.newUrl.pathname));
+    // Narrower cards can crowd a marker into its badge.
+    ctx.addEventListener(window, 'resize', () => requestAnimationFrame(() => stackCrowdedMarkers(document)));
     ctx.onInvalidated(() => observer?.disconnect());
   },
 });

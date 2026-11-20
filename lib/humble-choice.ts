@@ -1,95 +1,52 @@
-import { BADGE_ATTR, createSteamBadge } from './badge';
-import { normalizeTitle } from './normalize';
-import type { SteamRef } from './steam';
+import { BADGE_ATTR, badgeHeading, createSteamBadge } from './badge';
+import type { SteamLookup } from './title-site';
 
-/**
- * A Humble Choice month's items: per normalized title, its Steam entry, or
- * 'not-steam' for extras that aren't Steam games (e.g. "Get One Month of IGN
- * Plus", delivered as another kind of key).
- */
-export type ChoiceMonth = Record<string, SteamRef | 'not-steam'>;
-
-const MONTHS = [
-  'january', 'february', 'march', 'april', 'may', 'june',
-  'july', 'august', 'september', 'october', 'november', 'december',
-];
-const MONTH_SLUG = new RegExp(`^(${MONTHS.join('|')})-(\\d{4})$`);
-const MONTH_HEADING = new RegExp(`^(${MONTHS.join('|')}) (\\d{4}) games$`, 'i');
-
-/** Game tiles in a Choice month's grid, and the element that holds each tile's image. */
-const CHOICE_TILE_SELECTOR = '.content-choice';
-const TILE_TITLE_SELECTOR = '.content-choice-title';
-const TILE_IMAGE_SELECTOR = '.choice-image-container';
-
-/**
- * Which month a Choice page shows, as Humble's URL slug ("october-2026"). A
- * month page has it in its URL; the member hub (/membership/home) only in its
- * "October 2026 games" heading, which renders after load — so this can return
- * null early and the slug later.
- */
-export function choiceMonthSlug(pathname: string, doc: Document): string | null {
-  const fromPath = pathname.match(/^\/membership\/([a-z]+-\d{4})\/?$/)?.[1];
-  if (fromPath && MONTH_SLUG.test(fromPath)) return fromPath;
-  for (const heading of doc.querySelectorAll('.content-choices-title')) {
-    const match = heading.textContent?.trim().match(MONTH_HEADING);
-    if (match) return `${match[1]!.toLowerCase()}-${match[2]}`;
-  }
-  return null;
-}
-
-/** The public month page; fetched without cookies, so it never holds account data. */
-export function choiceMonthUrl(slug: string): string {
-  return `https://www.humblebundle.com/membership/${slug}`;
-}
-
-interface ChoiceGameData {
-  title?: string;
-  tpkds?: { steam_app_id?: number | null }[] | null;
-}
-
-/** Reads the month's items from the page's embedded product JSON. */
-export function parseChoiceMonth(html: string): ChoiceMonth | null {
-  const json = html.match(/<script id="webpack-monthly-product-data" type="application\/json">([\s\S]*?)<\/script>/)?.[1];
-  if (!json) return null;
-  const data = JSON.parse(json) as {
-    contentChoiceOptions?: { contentChoiceData?: { game_data?: Record<string, ChoiceGameData> } };
-  };
-  const games = data.contentChoiceOptions?.contentChoiceData?.game_data;
-  if (!games) return null;
-  const month: ChoiceMonth = {};
-  for (const game of Object.values(games)) {
-    if (!game.title) continue;
-    const appId = (game.tpkds ?? []).find((key) => key.steam_app_id)?.steam_app_id;
-    month[normalizeTitle(game.title)] = appId ? { type: 'app', id: appId } : 'not-steam';
-  }
-  return month;
-}
-
-/**
- * Lookup result per tile title: a Steam entry, null for "no match, offer a
- * search", 'not-steam' for "no badge at all", undefined for "not known yet".
- */
-export type ChoiceLookup = (title: string) => SteamRef | null | 'not-steam' | undefined;
+/** A game tile in a Choice month's grid. Its classes are Tailwind's, so only test ids are stable. */
+const CARD_SELECTOR = '[data-testid="product-card"]';
+/** The tile's art, which holds the badge. */
+const CARD_IMAGE_SELECTOR = '[data-testid="product-thumbnail"]';
+/** The tile's caption; its first part is the title, then "View Details". */
+const CARD_FOOTER_SELECTOR = '[data-testid="product-card-footer"]';
+/** The month's details dialog: its carousel of the month's games. */
+const DIALOG_SELECTOR = '[role="dialog"]:has([data-choice-count])';
 
 export function collectChoiceTitles(doc: Document): string[] {
-  const titles = [...doc.querySelectorAll(`${CHOICE_TILE_SELECTOR} ${TILE_TITLE_SELECTOR}`)].map(
-    (el) => el.textContent?.trim() ?? '',
-  );
+  const titles = [...doc.querySelectorAll(CARD_SELECTOR)].map(cardTitle);
   return [...new Set(titles.filter(Boolean))];
 }
 
-/** Adds a Steam badge to each Choice tile whose title is resolved. Returns how many were added. */
-export function annotateChoice(doc: Document, lookup: ChoiceLookup): number {
+/**
+ * Adds a Steam badge to each tile (in its corner) and to the details dialog's
+ * heading. Humble lists no Steam ids any more, so titles are matched on Steam;
+ * one without a match (an extra like "IGN Plus Subscription") gets no badge.
+ * Returns how many were added.
+ */
+export function annotateChoice(doc: Document, lookup: SteamLookup): number {
   let added = 0;
-  for (const tile of doc.querySelectorAll(CHOICE_TILE_SELECTOR)) {
-    const name = tile.querySelector(TILE_TITLE_SELECTOR)?.textContent?.trim();
-    if (!name || tile.querySelector(`[${BADGE_ATTR}]`)) continue;
-    const steam = lookup(name);
-    if (steam === undefined || steam === 'not-steam') continue;
-    const holder = tile.querySelector<HTMLElement>(TILE_IMAGE_SELECTOR) ?? (tile as HTMLElement);
+  for (const card of doc.querySelectorAll<HTMLElement>(CARD_SELECTOR)) {
+    // The tiles are buttons right in the grid, so anything beside one would
+    // take a grid cell: the badge goes on the tile's art instead.
+    const holder = card.querySelector<HTMLElement>(CARD_IMAGE_SELECTOR) ?? card;
+    if (holder.querySelector(`[${BADGE_ATTR}]`)) continue;
+    const badge = badgeFor(doc, cardTitle(card), lookup, 'corner');
+    if (!badge) continue;
     if (getComputedStyle(holder).position === 'static') holder.style.position = 'relative';
-    holder.append(createSteamBadge(doc, { name, steam }));
+    holder.append(badge);
     added++;
   }
+  for (const dialog of doc.querySelectorAll(DIALOG_SELECTOR)) {
+    // The dialog's carousel switches games by changing the heading's text.
+    const heading = dialog.querySelector('h3');
+    if (heading && badgeHeading(doc, heading, (name) => badgeFor(doc, name, lookup, 'inline'))) added++;
+  }
   return added;
+}
+
+function cardTitle(card: Element): string {
+  return card.querySelector(CARD_FOOTER_SELECTOR)?.firstElementChild?.textContent?.trim() ?? '';
+}
+
+function badgeFor(doc: Document, name: string, lookup: SteamLookup, placement: 'corner' | 'inline') {
+  const steam = name ? lookup(name) : undefined;
+  return steam ? createSteamBadge(doc, { name, steam }, placement) : null;
 }

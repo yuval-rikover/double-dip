@@ -65,6 +65,38 @@ export function createPackBadge(doc: Document, games: PackGame[]): HTMLElement {
   return button;
 }
 
+/** The line after a details heading that holds its badge and marker. */
+const HEADING_ROW_CLASS = 'bsl-row';
+/** On that line: the title it was made for. */
+const ROW_TITLE_ATTR = 'data-bsl-for';
+
+/**
+ * Puts a badge on its own line after a details view's heading. A view that
+ * moves on to another game may keep the heading and change only its text, so
+ * a line made for another title is replaced. `makeBadge` returns null while
+ * the title has no badge (yet). Returns whether a badge was added.
+ */
+export function badgeHeading(
+  doc: Document,
+  heading: Element,
+  makeBadge: (name: string) => HTMLElement | null,
+): boolean {
+  const name = heading.textContent?.trim() ?? '';
+  const next = heading.nextElementSibling;
+  const row = next?.classList.contains(HEADING_ROW_CLASS) ? next : null;
+  if (row?.getAttribute(ROW_TITLE_ATTR) === name) return false;
+  row?.remove();
+  const badge = name ? makeBadge(name) : null;
+  if (!badge) return false;
+  // Headings sit in columns, which would stretch the badge full width.
+  const line = doc.createElement('div');
+  line.classList.add(HEADING_ROW_CLASS);
+  line.setAttribute(ROW_TITLE_ATTR, name);
+  line.append(badge);
+  heading.after(line);
+  return true;
+}
+
 const guardedWindows = new WeakSet<Window>();
 
 /**
@@ -91,8 +123,16 @@ function guardBadgeClicks(doc: Document): void {
         event.preventDefault();
         // A click from the keyboard has no pointer, so detail is 0.
         togglePackMenu(pack, event.detail === 0);
-      } else if (element?.closest(`a[${BADGE_ATTR}]`)) {
+      } else {
+        const link = element?.closest<HTMLAnchorElement>(`a[${BADGE_ATTR}]`);
+        if (!link) return;
         event.stopImmediatePropagation();
+        // Inside a tile that is a button (Humble Choice), not every browser
+        // follows the link: open it here instead.
+        if (link.closest('button')) {
+          event.preventDefault();
+          win.open(link.href, '_blank', 'noopener');
+        }
       }
     },
     true,

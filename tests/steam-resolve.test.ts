@@ -20,9 +20,17 @@ function memoryCache(initial: Record<string, CachedRef> = {}): TitleCache & { st
   };
 }
 
-/** Fake network: Steam search answers from `steam`, ITAD from `itadIds`/`itadSteam`. */
+/** One package or bundle as GetItems lists it: its contents, by app id and type (0: game, 4: DLC). */
+type FakeGroup = { apps: [appid: number, type: number][] } | 'unavailable';
+
+/**
+ * Fake network: Steam search answers from `steam`, ITAD from `itadIds`/`itadSteam`,
+ * Steam's GetItems from `groups` ("sub/62118").
+ */
 function fakeFetch(opts: {
   steam?: Record<string, { type: string; id: number; name: string }[]>;
+  groups?: Record<string, FakeGroup>;
+  failItems?: boolean;
   itadIds?: Record<string, string | null>;
   itadSteam?: Record<string, string[] | null>;
   failSteam?: boolean;
@@ -37,6 +45,20 @@ function fakeFetch(opts: {
       if (opts.failSteam) return json({}, 500);
       const term = new URL(url).searchParams.get('term')!;
       return json({ items: opts.steam?.[term] ?? [] });
+    }
+    if (url.includes('IStoreBrowseService/GetItems')) {
+      if (opts.failItems) return json({}, 500);
+      const input = JSON.parse(new URL(url).searchParams.get('input_json')!) as {
+        ids: { packageid?: number; bundleid?: number }[];
+      };
+      const store_items = input.ids.map(({ packageid, bundleid }) => {
+        const [type, itemType, id] = packageid ? ['sub', 1, packageid] : ['bundle', 2, bundleid!];
+        const group = opts.groups?.[`${type}/${id}`];
+        if (!group || group === 'unavailable') return { item_type: itemType, id, success: 15 };
+        const included_apps = group.apps.map(([appid, appType]) => ({ appid, type: appType }));
+        return { item_type: itemType, id, success: 1, included_items: { included_apps } };
+      });
+      return json({ response: { store_items } });
     }
     if (opts.failItad) return json({}, 503);
     const body = JSON.parse(String(init?.body)) as string[];
@@ -158,5 +180,50 @@ describe('resolveSteamTitles', () => {
     await resolveSteamTitles(['A', 'B', 'A'], { fetch: fn, cache, now: () => NOW });
     expect(calls.filter((url) => url.includes('storesearch'))).toHaveLength(2);
     expect(calls.filter((url) => url.includes('isthereanydeal'))).toHaveLength(1); // no ITAD ids → no second call
+  });
+
+  it('maps an edition sold only as packages to the one game in the first one still sold', async () => {
+    // Resident Evil 6 Complete, as ITAD and Steam listed it in 2026-11.
+    const { fn } = fakeFetch({
+      itadIds: { 'Resident Evil 6 Complete': 'itad-re6' },
+      itadSteam: { 'itad-re6': ['sub/32963', 'sub/50980'] },
+      groups: { 'sub/32963': 'unavailable', 'sub/50980': { apps: [[221040, 0]] } },
+    });
+    expect(await resolveSteamTitles(['Resident Evil 6 Complete'], { fetch: fn, cache, now: () => NOW })).toEqual({
+      'Resident Evil 6 Complete': { type: 'app', id: 221040 },
+    });
+  });
+
+  it('maps an edition sold only as bundles to its game, past the DLC in it', async () => {
+    const { fn } = fakeFetch({
+      itadIds: { 'RESIDENT EVIL 7 biohazard Gold Edition': 'itad-re7' },
+      itadSteam: { 'itad-re7': ['bundle/5837', 'bundle/18463'] },
+      groups: { 'bundle/18463': { apps: [[418370, 0], [529930, 4], [540340, 4]] } },
+    });
+    expect(await resolveSteamTitles(['RESIDENT EVIL 7 biohazard Gold Edition'], { fetch: fn, cache, now: () => NOW })).toEqual({
+      'RESIDENT EVIL 7 biohazard Gold Edition': { type: 'app', id: 418370 },
+    });
+  });
+
+  it('keeps a package of several games, which no one game stands for', async () => {
+    const { fn } = fakeFetch({
+      steam: { 'Two Pack': [{ type: 'sub', id: 9, name: 'Two Pack' }] },
+      groups: { 'sub/9': { apps: [[1, 0], [2, 0]] } },
+    });
+    expect(await resolveSteamTitles(['Two Pack'], { fetch: fn, cache, now: () => NOW })).toEqual({
+      'Two Pack': { type: 'sub', id: 9 },
+    });
+  });
+
+  it('caches a bundle-only title with no single game as a miss', async () => {
+    const { fn } = fakeFetch({ itadIds: { Gone: 'itad-gone' }, itadSteam: { 'itad-gone': ['bundle/1'] } });
+    expect(await resolveSteamTitles(['Gone'], { fetch: fn, cache, now: () => NOW })).toEqual({ Gone: null });
+    expect(cache.store[cacheKey('Gone')]).toEqual({ ref: null, at: NOW });
+  });
+
+  it("doesn't cache a package match while Steam can't say what's in it", async () => {
+    const { fn } = fakeFetch({ steam: { Pack: [{ type: 'sub', id: 9, name: 'Pack' }] }, failItems: true });
+    expect(await resolveSteamTitles(['Pack'], { fetch: fn, cache, now: () => NOW })).toEqual({ Pack: { type: 'sub', id: 9 } });
+    expect(cache.store).toEqual({});
   });
 });

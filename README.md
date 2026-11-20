@@ -16,7 +16,7 @@ shows:
 Works on:
 
 - Humble Bundle game and software bundles
-- Humble Choice (the current month and past months)
+- Humble Choice
 - Fanatical bundles, including build-your-own bundles
 - Green Man Gaming bundles
 
@@ -27,10 +27,11 @@ Works on:
   Steam and Epic, whose sessions lapse on their own: their last library stays
   in use until the store answers again. The toolbar popup shows each store's
   status and refreshes your libraries.
-- **Finding the Steam game.** Fanatical and Humble Choice pages carry Steam
-  IDs. Humble Bundle and Green Man Gaming list only titles, which are matched
+- **Finding the Steam game.** Fanatical pages carry Steam IDs. Humble Bundle,
+  Humble Choice and Green Man Gaming list only titles, which are matched
   exactly on Steam's store search, with [IsThereAnyDeal](https://isthereanydeal.com/)
-  as a fallback.
+  as a fallback. An edition Steam sells only as a package or bundle ("Gold
+  Edition") counts as the one game in it, for its rating and ownership.
 - **GOG and Epic** are matched by ID through IsThereAnyDeal, not by name.
 - **Ratings** come from Steam's store API, up to 50 games per request.
 - Lookups and libraries are cached in the browser, so repeat visits are

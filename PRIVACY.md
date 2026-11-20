@@ -1,6 +1,6 @@
 # Privacy policy — Double Dip
 
-_Last updated: 2026-10-23_
+_Last updated: 2026-11-12_
 
 Double Dip is a browser extension that adds Steam store links to games on
 Humble Bundle, Humble Choice, Fanatical and Green Man Gaming bundle pages, shows each game's
@@ -13,12 +13,9 @@ browser.
 
 ## What it reads
 
-- **Bundle pages** (humblebundle.com, fanatical.com, greenmangamingbundles.com):
-  the names of the games in the bundle, and for Fanatical, the Steam IDs the
-  page itself provides.
-- **Humble Choice pages**: the month's game list and Steam IDs, read from the
-  month's public page, fetched without your Humble sign-in so it contains no
-  account data.
+- **Bundle and Humble Choice pages** (humblebundle.com, fanatical.com,
+  greenmangamingbundles.com): the names of the games on the page, and for
+  Fanatical, the Steam IDs the page itself provides.
 - **Your store libraries**, using the sign-ins you already have in this browser:
   - **Steam**: the IDs of the apps and packages you own, and of the apps on
     your wishlist.
@@ -41,8 +38,8 @@ The extension talks only to these services, and only to do its job:
 
 | Sent to | What | Why |
 |---|---|---|
-| Steam (`store.steampowered.com`) | Game names from Humble and Green Man Gaming bundle pages | To find each game's Steam store page |
-| Steam (`api.steampowered.com`) | Steam IDs of games on the page | To show each game's Steam rating |
+| Steam (`store.steampowered.com`) | Game names from Humble Bundle, Humble Choice and Green Man Gaming pages | To find each game's Steam store page |
+| Steam (`api.steampowered.com`) | Steam IDs of games on the page | To show each game's Steam rating, and to find the game in an edition Steam sells as a package |
 | IsThereAnyDeal (`api.isthereanydeal.com`) | Game names Steam couldn't match, and Steam IDs of games on the page | To find the game's Steam, GOG and Epic IDs |
 | Steam, GOG (`embed.gog.com`), Epic (`accounts.epicgames.com`) | Requests for your own library (and Steam and GOG wishlists), sent with your existing sign-in | To check which games you own or wishlisted |
 
@@ -61,7 +58,7 @@ In your browser's extension storage, on your device only:
 
 - Your owned-game IDs per store, and Steam and GOG wishlist IDs, refreshed hourly (Epic: incrementally, fully
   once a week).
-- Lookup results: game name → Steam ID, Humble Choice month → Steam IDs, and
+- Lookup results: game name → Steam ID, and
   Steam ID → GOG/Epic IDs, kept for up to 30 days so pages load quickly;
   Steam ratings, kept for a week.
 

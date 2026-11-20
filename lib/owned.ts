@@ -1,4 +1,4 @@
-import { STEAM_REF_ATTR } from './badge';
+import { BADGE_ATTR, STEAM_REF_ATTR } from './badge';
 import { PACK_ATTR, PACK_STORES_ATTR, packEntries } from './pack-data';
 import { ownedLabel, STORE_NAMES, storeNames as names, wishLabel, type Store } from './ownership';
 import { setTip } from './tooltip';
@@ -9,6 +9,11 @@ const STORES = Object.keys(STORE_NAMES) as Store[];
 const CHECKED_ATTR = 'data-bsl-owned-checked';
 const OWNED_ATTR = 'data-bsl-owned';
 const WISH_ATTR = 'data-bsl-wish';
+
+/** On a corner marker that would run into its tile's Steam badge: drop below it (see badge.css). */
+const BELOW_BADGE_ATTR = 'data-bsl-below-badge';
+/** Space kept between a corner marker and the badge. */
+const MARKER_GAP = 4;
 
 /** Where the user has a game: stores owning it, and for a game owned nowhere, wishlists holding it. */
 export interface GameStores {
@@ -33,6 +38,25 @@ export function uncheckedSteamRefs(doc: Document): string[] {
 interface PackGame {
   title: string;
   stores: Store[];
+}
+
+/**
+ * Moves each corner marker below its tile's Steam badge where the two would
+ * overlap: on a narrow tile, a rated badge and a two-store marker don't fit
+ * on one line. Run again when badges widen (a rating arrives) or tiles resize.
+ */
+export function stackCrowdedMarkers(doc: Document): void {
+  const pairs = [...doc.querySelectorAll<HTMLElement>(`.bsl-owned:not(.bsl-owned--inline)`)].flatMap((marker) => {
+    const badge = marker.previousElementSibling;
+    return badge?.hasAttribute(BADGE_ATTR) ? [{ marker, badge }] : [];
+  });
+  // Measured beside the badge, where they'd sit with room: all put back
+  // first, so the page lays out once rather than once per tile.
+  for (const { marker } of pairs) marker.removeAttribute(BELOW_BADGE_ATTR);
+  const crowded = pairs.map(
+    ({ marker, badge }) => marker.getBoundingClientRect().right + MARKER_GAP > badge.getBoundingClientRect().left,
+  );
+  pairs.forEach(({ marker }, i) => marker.toggleAttribute(BELOW_BADGE_ATTR, crowded[i]!));
 }
 
 /** Removes every owned and wishlist marker, so the next `markOwnedBadges` starts over. */

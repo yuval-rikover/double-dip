@@ -31,6 +31,14 @@
   margin: 4px 0;
 }
 
+/* After a heading in a column (Humble's details dialog): the badge and its
+   marker on one line, at their own width. */
+.bsl-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
 /* Inside a pack's game list: smaller, to sit on the title's line. */
 li > .bsl-badge.bsl-badge--inline,
 li > .bsl-owned--inline {
@@ -238,6 +246,18 @@ li > .bsl-owned--inline > * {
    would cover our row: set by clearFanaticalRibbons. */
 [data-bsl-below-ribbon] {
   top: 31px !important;
+}
+
+/* Where the marker and the Steam badge don't fit side by side: the marker
+   goes under the badge, lined up with it. Set by stackCrowdedMarkers. */
+[data-bsl-below-badge] {
+  top: 36px !important;
+  right: 8px !important;
+  left: auto !important;
+}
+
+[data-bsl-below-ribbon][data-bsl-below-badge] {
+  top: 59px !important;
 }
 
 .bsl-owned.bsl-owned--inline {

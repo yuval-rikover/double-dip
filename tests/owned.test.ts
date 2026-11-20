@@ -1,7 +1,13 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createPackBadge, createSteamBadge, type PackGame } from '../lib/badge';
-import { clearOwnedMarkers, markOwnedBadges, uncheckedSteamRefs, type OwnershipLookup } from '../lib/owned';
+import {
+  clearOwnedMarkers,
+  markOwnedBadges,
+  stackCrowdedMarkers,
+  uncheckedSteamRefs,
+  type OwnershipLookup,
+} from '../lib/owned';
 import type { Store } from '../lib/ownership';
 
 const answers: Record<string, Store[]> = {
@@ -195,5 +201,46 @@ describe('markOwnedBadges on packs', () => {
     pack([trio[2]!]);
     expect(markOwnedBadges(document, lookup)).toBe(0);
     expect(uncheckedSteamRefs(document)).toEqual([]);
+  });
+});
+
+describe('stackCrowdedMarkers', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  /** A tile with a corner marker ending at `markerRight` and a badge starting at `badgeLeft`. */
+  function placed(markerRight: number, badgeLeft: number) {
+    tile({ name: 'Brütal Legend', steam: { type: 'app', id: 225260 } });
+    markOwnedBadges(document, lookup);
+    const marker = markers().at(-1) as HTMLElement;
+    const badge = marker.previousElementSibling as HTMLElement;
+    const rect = (left: number, right: number) => () => ({ left, right, top: 8, bottom: 31 }) as DOMRect;
+    marker.getBoundingClientRect = rect(8, markerRight);
+    badge.getBoundingClientRect = rect(badgeLeft, 242);
+    return marker;
+  }
+
+  it('drops a marker below the badge it would run into', () => {
+    // A narrow Humble tile: "✓ Steam" ends where the rated badge begins.
+    const marker = placed(97, 95);
+    stackCrowdedMarkers(document);
+    expect(marker.hasAttribute('data-bsl-below-badge')).toBe(true);
+  });
+
+  it('leaves a marker with room beside the badge, and lifts it back when room returns', () => {
+    const marker = placed(97, 150);
+    stackCrowdedMarkers(document);
+    expect(marker.hasAttribute('data-bsl-below-badge')).toBe(false);
+    marker.setAttribute('data-bsl-below-badge', '');
+    stackCrowdedMarkers(document);
+    expect(marker.hasAttribute('data-bsl-below-badge')).toBe(false);
+  });
+
+  it('leaves inline markers alone', () => {
+    tile({ name: 'Brütal Legend', steam: { type: 'app', id: 225260 } }, 'inline');
+    markOwnedBadges(document, lookup);
+    stackCrowdedMarkers(document);
+    expect(markers()[0]!.hasAttribute('data-bsl-below-badge')).toBe(false);
   });
 });

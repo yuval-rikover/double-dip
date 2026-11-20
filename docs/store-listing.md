@@ -53,7 +53,7 @@ game bundle pages (Humble Bundle, Humble Choice, Fanatical, Green Man Gaming).
 | Permission | Justification |
 |---|---|
 | `storage` | Caches the user's owned-game IDs and game-ID lookups locally, so bundle pages show markers instantly and the stores aren't asked on every page load. |
-| Content scripts on `www.humblebundle.com/games/*`, `/software/*`, `/membership/*`, `www.fanatical.com/*` and `www.greenmangamingbundles.com/bundles/*` | Reads the games listed on bundle and Humble Choice pages and adds the Steam links and owned markers to them. |
+| Content scripts on `www.humblebundle.com/*`, `www.fanatical.com/*` and `www.greenmangamingbundles.com/bundles/*` | Reads the games listed on bundle and Humble Choice pages and adds the Steam links and owned markers to them. Humble and Fanatical are single-page apps, so the script runs site-wide and acts only once a bundle or Choice page is open. |
 | `https://store.steampowered.com/*` | Looks up a game's Steam page from its name (Humble pages don't list Steam IDs), and reads the user's owned Steam games with their existing Steam sign-in. |
 | `https://api.steampowered.com/*` | Reads the Steam review summary (percent positive) for the games on the page, to show it in each game's Steam link. No sign-in is used. |
 | `https://embed.gog.com/*` | Reads the user's owned GOG products with their existing GOG sign-in. |

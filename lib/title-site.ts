@@ -1,6 +1,7 @@
 import { browser } from 'wxt/browser';
 import type { ContentScriptContext } from 'wxt/utils/content-script-context';
 import type { ResolveSteamTitlesMessage, ResolveSteamTitlesResponse } from './messages';
+import { stackCrowdedMarkers } from './owned';
 import { createOwnershipMarker, createRatingMarker, warmLibraries } from './ownership-client';
 import type { SteamRef } from './steam';
 
@@ -12,6 +13,11 @@ export interface TitleSite {
   collectTitles(doc: Document): string[];
   /** Adds badges for the titles `lookup` can answer; must skip tiles already badged. */
   annotate(doc: Document, lookup: SteamLookup): void;
+  /**
+   * Whether the page shown now has tiles to annotate. A single-page site
+   * (Humble) changes pages without a reload, so it's asked on every change.
+   */
+  isActive?(): boolean;
 }
 
 /**
@@ -31,6 +37,7 @@ export function runTitleSite(ctx: ContentScriptContext, site: TitleSite): void {
     site.annotate(document, (title) => resolved.get(title));
     markOwned();
     markRatings();
+    stackCrowdedMarkers(document);
   };
 
   const resolveTitle = async (title: string) => {
@@ -42,7 +49,14 @@ export function runTitleSite(ctx: ContentScriptContext, site: TitleSite): void {
     annotate();
   };
 
+  let warmed = false;
   const rescan = () => {
+    if (site.isActive && !site.isActive()) return;
+    // Libraries load only once a page with tiles is open.
+    if (!warmed) {
+      warmed = true;
+      warmLibraries();
+    }
     annotate();
     for (const title of site.collectTitles(document)) {
       if (requested.has(title)) continue;
@@ -51,7 +65,6 @@ export function runTitleSite(ctx: ContentScriptContext, site: TitleSite): void {
     }
   };
 
-  warmLibraries();
   rescan();
   let scheduled = false;
   const observer = new MutationObserver(() => {
@@ -63,5 +76,7 @@ export function runTitleSite(ctx: ContentScriptContext, site: TitleSite): void {
     });
   });
   observer.observe(document.body, { childList: true, subtree: true });
+  // Narrower tiles can crowd a marker into its badge.
+  ctx.addEventListener(window, 'resize', () => requestAnimationFrame(() => stackCrowdedMarkers(document)));
   ctx.onInvalidated(() => observer.disconnect());
 }
