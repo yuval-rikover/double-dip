@@ -53,12 +53,25 @@ game bundle pages (Humble Bundle, Humble Choice, Fanatical, Green Man Gaming).
 | Permission | Justification |
 |---|---|
 | `storage` | Caches the user's owned-game IDs and game-ID lookups locally, so bundle pages show markers instantly and the stores aren't asked on every page load. |
-| Content scripts on `www.humblebundle.com/*`, `www.fanatical.com/*` and `www.greenmangamingbundles.com/bundles/*` | Reads the games listed on bundle and Humble Choice pages and adds the Steam links and owned markers to them. Humble and Fanatical are single-page apps, so the script runs site-wide and acts only once a bundle or Choice page is open. |
-| `https://store.steampowered.com/*` | Looks up a game's Steam page from its name (Humble pages don't list Steam IDs), and reads the user's owned Steam games with their existing Steam sign-in. |
-| `https://api.steampowered.com/*` | Reads the Steam review summary (percent positive) for the games on the page, to show it in each game's Steam link. No sign-in is used. |
-| `https://embed.gog.com/*` | Reads the user's owned GOG products with their existing GOG sign-in. |
-| `https://accounts.epicgames.com/*` | Reads the user's Epic Games Store order history with their existing Epic sign-in, to know which Epic games they own. |
-| `https://api.isthereanydeal.com/*` | Maps games between stores (Steam ID ↔ GOG/Epic IDs) so ownership is matched by ID, not by name. |
+
+Host permissions: one text box for all hosts, at most 1000 characters. Paste
+as plain text:
+
+```text
+Every host is used only to mark the games on bundle pages; nothing is sent to the developer.
+
+Content scripts (www.humblebundle.com, fanatical.com, greenmangamingbundles.com/bundles): read the games on bundle and Humble Choice pages and add Steam links and owned markers. Humble and Fanatical are single-page apps, so the scripts run site-wide but act only on bundle and Choice pages.
+
+store.steampowered.com: finds a game's Steam page from its name (Humble and GMG list no Steam IDs) and reads the user's owned Steam games with their existing sign-in.
+
+api.steampowered.com: reads Steam review summaries, and which game an edition package contains. No sign-in.
+
+embed.gog.com: reads the user's owned GOG games with their existing sign-in.
+
+accounts.epicgames.com: reads the user's Epic order history with their existing sign-in, to find their owned Epic games.
+
+api.isthereanydeal.com: maps Steam IDs to GOG and Epic IDs, so ownership is matched by ID, not by name.
+```
 
 Remote code: **No.** All code ships in the package.
 
